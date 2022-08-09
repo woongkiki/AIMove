@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1010442184943",
+    "project_id": "ai-move-64091",
+    "storage_bucket": "ai-move-64091.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1010442184943:android:7a1f294f388051b883931a",
+        "android_client_info": {
+          "package_name": "com.cnjmonster.aimove"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1010442184943-4qcbsdj1tguc471qr8semci8r6t4opr1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAIRVZa2gHBDnvvNJuxu37qPN0Cs_qZFyo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1010442184943-4qcbsdj1tguc471qr8semci8r6t4opr1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
