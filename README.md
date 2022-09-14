@@ -866,3 +866,460 @@ Message.propTypes = {
 };
 //# sourceMappingURL=Message.js.map
 ```
+
+### react-native-gifted-chat ⇒ lib⇒ MessageImage.js
+
+### (gift-chat 이미지파일 다운로드 위하여 props에 이미지 url 넣어줌)
+
+```JS
+import PropTypes from 'prop-types';
+import React from 'react';
+import { Image, StyleSheet, View, } from 'react-native';
+// TODO: support web
+import Lightbox from 'react-native-lightbox-v2';
+import { StylePropType } from './utils';
+const styles = StyleSheet.create({
+    container: {},
+    image: {
+        width: 150,
+        height: 100,
+        borderRadius: 13,
+        margin: 3,
+        resizeMode: 'cover',
+    },
+    imageActive: {
+        flex: 1,
+        resizeMode: 'contain',
+    },
+});
+export function MessageImage({ containerStyle, lightboxProps = {}, imageProps = {}, imageStyle, currentMessage, }) {
+    if (currentMessage == null) {
+        return null;
+    }
+    return (<View style={[styles.container, containerStyle]}>
+      <Lightbox activeProps={{
+            style: styles.imageActive,
+        }} {...lightboxProps}
+        urls = { currentMessage.image } //이미지 url prop 추가
+        >
+        <Image {...imageProps} style={[styles.image, imageStyle]} source={{ uri: currentMessage.image }}/>
+      </Lightbox>
+    </View>);
+}
+MessageImage.propTypes = {
+    currentMessage: PropTypes.object,
+    containerStyle: StylePropType,
+    imageStyle: StylePropType,
+    imageProps: PropTypes.object,
+    lightboxProps: PropTypes.object,
+};
+//# sourceMappingURL=MessageImage.js.map
+```
+
+### react-native-lightbox-v2 => LightBox.js ( gifted-chat 버전에따라 상이)
+
+### (gift-chat 이미지파일 다운로드 위하여 props에 이미지 url 넣어줌)
+
+```JS
+import React, { useRef, useState, cloneElement, Children, isValidElement, } from "react";
+import { Animated, TouchableHighlight, View, } from "react-native";
+import LightboxOverlay from "./LightboxOverlay";
+import { useNextTick } from "./hooks";
+const noop = () => { };
+const Lightbox = ({ activeProps, swipeToDismiss = true, useNativeDriver = false, disabled = false, renderContent, renderHeader, didOpen = noop, onOpen = noop, willClose = noop, onClose = noop, onLongPress = noop, onLayout = noop, springConfig = { tension: 30, friction: 7 }, backgroundColor = "black", underlayColor, style, dragDismissThreshold = 150, children, modalProps = {}, urls, ...rest }) => {
+
+    //파라미터 부분에 urls 추가
+
+    const layoutOpacity = useRef(new Animated.Value(1));
+    const _root = useRef(null);
+    const closeNextTick = useNextTick(onClose);
+    const openNextTick = useNextTick(() => {
+        _root.current && layoutOpacity.current.setValue(0);
+    });
+    const [{ isOpen, origin }, setState] = useState({
+        isOpen: false,
+        origin: { x: 0, y: 0, width: 0, height: 0 },
+    });
+    const getContent = () => {
+        if (renderContent)
+            return renderContent();
+        else if (activeProps && isValidElement(children))
+            return cloneElement(Children.only(children), activeProps);
+        return children;
+    };
+    const handleOnClose = () => {
+        layoutOpacity.current.setValue(1);
+        setState((s) => ({ ...s, isOpen: false }));
+        closeNextTick();
+    };
+    const wrapMeasureWithCallback = (callback) => {
+        _root.current.measure((ox, oy, width, height, px, py) => {
+            callback({ width, height, x: px, y: py });
+        });
+    };
+    const open = () => {
+        if (!_root.current)
+            return;
+        onOpen();
+        wrapMeasureWithCallback((newOrigin) => {
+            setState((s) => ({
+                ...s,
+                isOpen: true,
+                origin: { ...newOrigin },
+            }));
+            openNextTick();
+        });
+    };
+    const getOverlayProps = () => ({
+        isOpen,
+        origin,
+        renderHeader,
+        swipeToDismiss,
+        springConfig,
+        backgroundColor,
+        children: getContent(),
+        didOpen,
+        willClose,
+        onClose: handleOnClose,
+        useNativeDriver,
+        dragDismissThreshold,
+        modalProps,
+        urls, // 추가한 파라미터
+        ...rest,
+    });
+    return (<View ref={_root} style={style} onLayout={onLayout}>
+      <Animated.View style={{ opacity: layoutOpacity.current }}>
+        <TouchableHighlight underlayColor={underlayColor} onPress={open} onLongPress={onLongPress} disabled={disabled}>
+          {children}
+        </TouchableHighlight>
+      </Animated.View>
+      {disabled ? null : <LightboxOverlay {...getOverlayProps()}/>}
+    </View>);
+};
+export default Lightbox;
+```
+
+### react-native-lightbox-v2 => LightBoxOverlay.js ( gifted-chat 버전에따라 상이)
+
+### (gift-chat 이미지파일 다운로드 버튼 및 다운로드 이벤트 추가)
+
+```JS
+import React, { useRef, useEffect, useState } from "react";
+import { Animated, Dimensions, PanResponder, Platform, StyleSheet, StatusBar, TouchableOpacity, Text, Modal, SafeAreaView, PermissionsAndroid, Alert, } from "react-native";
+import { DefText } from "../../../src/common/BOOTSTRAP";
+import { useGesture, useNextTick } from "./hooks";
+var RNFetchBlob = require('rn-fetch-blob').default
+
+const { width: WINDOW_WIDTH, height: WINDOW_HEIGHT } = Dimensions.get("window");
+const isIOS = Platform.OS === "ios";
+const getDefaultTarget = () => ({ x: 0, y: 0, opacity: 1 });
+const styles = StyleSheet.create({
+    background: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: WINDOW_WIDTH,
+        height: WINDOW_HEIGHT,
+    },
+    open: {
+        position: "absolute",
+        flex: 1,
+        justifyContent: "center",
+        // Android pan handlers crash without this declaration:
+        backgroundColor: "transparent",
+    },
+    header: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: WINDOW_WIDTH,
+        backgroundColor: "transparent",
+    },
+    closeButton: {
+        fontSize: 35,
+        color: "white",
+        lineHeight: 60,
+        width: 70,
+        textAlign: "center",
+        shadowOffset: {
+            width: 0,
+            height: 0,
+        },
+        shadowRadius: 1.5,
+        shadowColor: "black",
+        shadowOpacity: 0.8,
+    },
+});
+const LightboxOverlay = ({ useNativeDriver, dragDismissThreshold, springConfig, isOpen, onClose, willClose, didOpen, swipeToDismiss, origin, backgroundColor, renderHeader, modalProps, children, doubleTapZoomEnabled, doubleTapGapTimer, doubleTapCallback, doubleTapZoomToCenter, doubleTapMaxZoom, doubleTapZoomStep, doubleTapInitialScale, doubleTapAnimationDuration, longPressGapTimer, longPressCallback, urls }) => {
+
+
+    const _panResponder = useRef();
+    const pan = useRef(new Animated.Value(0));
+    const openVal = useRef(new Animated.Value(0));
+    const handlers = useRef();
+    const [gesture, animations] = useGesture({
+        useNativeDriver,
+        doubleTapZoomEnabled,
+        doubleTapGapTimer,
+        doubleTapCallback,
+        doubleTapZoomToCenter,
+        doubleTapMaxZoom,
+        doubleTapZoomStep,
+        doubleTapInitialScale,
+        doubleTapAnimationDuration,
+        longPressGapTimer,
+        longPressCallback
+    });
+    const [{ isAnimating, isPanning, target }, setState] = useState({
+        isAnimating: false,
+        isPanning: false,
+        target: getDefaultTarget(),
+    });
+    const handleCloseNextTick = useNextTick(onClose);
+    const close = () => {
+        willClose();
+        if (isIOS) {
+            StatusBar.setHidden(false, "fade");
+        }
+        gesture.reset();
+        setState((s) => ({
+            ...s,
+            isAnimating: true,
+        }));
+        Animated.spring(openVal.current, {
+            toValue: 0,
+            ...springConfig,
+            useNativeDriver,
+        }).start(({ finished }) => {
+            if (finished) {
+                setState((s) => ({ ...s, isAnimating: false }));
+                handleCloseNextTick();
+            }
+        });
+    };
+    const open = () => {
+        if (isIOS) {
+            StatusBar.setHidden(true, "fade");
+        }
+        pan.current.setValue(0);
+        setState((s) => ({
+            ...s,
+            isAnimating: true,
+            target: getDefaultTarget(),
+        }));
+        Animated.spring(openVal.current, {
+            toValue: 1,
+            ...springConfig,
+            useNativeDriver,
+        }).start(({ finished }) => {
+            if (finished) {
+                setState((s) => ({ ...s, isAnimating: false }));
+                didOpen();
+            }
+        });
+    };
+    const initPanResponder = () => {
+        _panResponder.current = PanResponder.create({
+            // Ask to be the responder:
+            onStartShouldSetPanResponder: () => !isAnimating,
+            onStartShouldSetPanResponderCapture: () => !isAnimating,
+            onMoveShouldSetPanResponder: () => !isAnimating,
+            onMoveShouldSetPanResponderCapture: () => !isAnimating,
+            onPanResponderGrant: (e, gestureState) => {
+                gesture.init();
+                pan.current.setValue(0);
+                setState((s) => ({ ...s, isPanning: true }));
+                gesture.onLongPress(e, gestureState);
+                gesture.onDoubleTap(e, gestureState);
+            },
+            onPanResponderMove: Animated.event([null, { dy: pan.current }], {
+                useNativeDriver,
+            }),
+            onPanResponderTerminationRequest: () => true,
+            onPanResponderRelease: (evt, gestureState) => {
+                gesture.release();
+                if (gesture.isDoubleTaped)
+                    return;
+                if (gesture.isLongPressed)
+                    return;
+                if (Math.abs(gestureState.dy) > dragDismissThreshold) {
+                    setState((s) => ({
+                        ...s,
+                        isPanning: false,
+                        target: {
+                            y: gestureState.dy,
+                            x: gestureState.dx,
+                            opacity: 1 - Math.abs(gestureState.dy / WINDOW_HEIGHT),
+                        },
+                    }));
+                    close();
+                }
+                else {
+                    Animated.spring(pan.current, {
+                        toValue: 0,
+                        ...springConfig,
+                        useNativeDriver,
+                    }).start(({ finished }) => {
+                        finished && setState((s) => ({ ...s, isPanning: false }));
+                    });
+                }
+            },
+        });
+    };
+    useEffect(() => {
+        initPanResponder();
+    }, [useNativeDriver, isAnimating]);
+    useEffect(() => {
+        isOpen && open();
+    }, [isOpen]);
+    useEffect(() => {
+        if (_panResponder.current && swipeToDismiss) {
+            handlers.current = _panResponder.current.panHandlers;
+        }
+    }, [swipeToDismiss, _panResponder.current]);
+    const lightboxOpacityStyle = {
+        opacity: openVal.current.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, target.opacity],
+        }),
+    };
+    let dragStyle;
+    if (isPanning) {
+        dragStyle = {
+            top: pan.current,
+        };
+        lightboxOpacityStyle.opacity = pan.current.interpolate({
+            inputRange: [-WINDOW_HEIGHT, 0, WINDOW_HEIGHT],
+            outputRange: [0, 1, 0],
+        });
+    }
+    const openStyle = [
+        styles.open,
+        {
+            left: openVal.current.interpolate({
+                inputRange: [0, 1],
+                outputRange: [origin.x, target.x],
+            }),
+            top: openVal.current.interpolate({
+                inputRange: [0, 1],
+                outputRange: [origin.y, target.y],
+            }),
+            width: openVal.current.interpolate({
+                inputRange: [0, 1],
+                outputRange: [origin.width, WINDOW_WIDTH],
+            }),
+            height: openVal.current.interpolate({
+                inputRange: [0, 1],
+                outputRange: [origin.height, WINDOW_HEIGHT],
+            }),
+        },
+    ];
+    const background = (<Animated.View style={[styles.background, { backgroundColor }, lightboxOpacityStyle]}></Animated.View>);
+    const header = (<Animated.View style={[styles.header, lightboxOpacityStyle]}>
+      {renderHeader ? (renderHeader(close)) : (<TouchableOpacity onPress={close}>
+          <Text style={styles.closeButton}>×</Text>
+        </TouchableOpacity>)}
+    </Animated.View>);
+    const content = (<Animated.View style={[openStyle, dragStyle, animations]} {...handlers.current}>
+      {children}
+    </Animated.View>);
+
+
+    const checkPermission = async (files) => {
+        let fileUrl = files;
+
+        console.log('files', fileUrl);
+
+        if(Platform.OS === "ios"){
+            downloadFile(fileUrl);
+        }else{
+            try{
+                const granted = await PermissionsAndroid.request(
+                    PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+                    {
+                        title: "파일 사용 권한 필요",
+                        message:
+                            '파일을 다운로드하기 위하여 접근을 허용해주세요.'
+                    }
+                );
+                if(granted == PermissionsAndroid.RESULTS.GRANTED){
+                    console.log("안드로이드 파일 사용 권한이 승인되었습니다.");
+                    downloadFile(fileUrl);
+                }else{
+                    Alert.alert("오류", "파일을 다운로드하기 위한 권한이 부여되지 않았습니다.");
+                }
+            }catch(err){
+                console.log("++++",err);
+            }
+        }
+
+    }
+
+    const getFileExtention = (fileUrl) => {
+        return /[.]/.exec(fileUrl) ?
+             /[^.]+$/.exec(fileUrl) : undefined;
+    }
+
+    const downloadFile = (fileUrl) => {
+        let date = new Date();
+        let years = date.getFullYear();
+        let month = date.getMonth();
+        if(month > 10){
+            month = "0" + month;
+        }else{
+            month = month;
+        }
+        let days = date.getDate();
+
+        let dateTimes = years + '' + month + '' + days;
+
+        // File URL which we want to download
+        let FILE_URL = fileUrl;    
+        // Function to get extention of the file url
+        let file_ext = getFileExtention(FILE_URL);
+
+        console.log('file_ext::::::::',file_ext)
+    
+        file_ext = '.' + file_ext[0];
+
+        const { config, fs } = RNFetchBlob;
+        let RootDir = Platform.OS === 'ios' ? fs.dirs.DocumentDir : fs.dirs.PictureDir;
+        let options = {
+        fileCache: true,
+        addAndroidDownloads: {
+            path:
+            RootDir+
+            '/' + dateTimes +
+            file_ext,
+            description: 'downloading file...',
+            notification: true,
+            // useDownloadManager works with Android only
+            useDownloadManager: true,   
+        },
+        };
+        config(options)
+        .fetch('GET', FILE_URL)
+        .then(res => {
+            // Alert after successful downloading
+            console.log('res -> ', JSON.stringify(res));
+            Alert.alert('이미지 다운로드가 완료되었습니다.');
+            console.log('저장된 디렉토리..', fs.dirs.DocumentDir);
+        });
+    }
+
+    return (<Modal visible={isOpen} transparent={true} onRequestClose={close} {...modalProps}>
+      {background}
+      {content}
+      <SafeAreaView style={{flex:1, justifyContent:'flex-end'}}>
+        {header}
+        <TouchableOpacity
+            onPress={ () => checkPermission(urls)} 
+            style={{backgroundColor:'rgba(255,255,255,0.3)', height:40, justifyContent:'center', alignItems:'center'}}
+        >
+            <DefText text="저장" style={{color:'#fff'}} />
+        </TouchableOpacity>
+      </SafeAreaView>
+    </Modal>);
+};
+export default LightboxOverlay;
+```
