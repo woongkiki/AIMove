@@ -404,6 +404,7 @@ const { containerStyle } = StyleSheet.create({
         marginLeft: 10,
         marginRight: 10,
         marginBottom: 5,
+        marginTop:5,
     },
 });
 const { textStyle } = StyleSheet.create({
@@ -1212,8 +1213,6 @@ MessageImage.propTypes = {
 
 ### (gift-chat 메시지 박스 수정)
 
-### react-native-lightbox-v2 => LightBox.js ( gifted-chat 버전에따라 상이)
-
 ```JS
 import PropTypes from 'prop-types';
 import React from 'react';
@@ -1363,6 +1362,7 @@ MessageText.propTypes = {
 };
 //# sourceMappingURL=MessageText.js.map
 ```
+### react-native-lightbox-v2 => LightBox.js ( gifted-chat 버전에따라 상이)
 
 ### (gift-chat 이미지파일 다운로드 위하여 props에 이미지 url 넣어줌)
 
