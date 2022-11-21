@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import { TouchableOpacity, Image, StyleSheet, Platform, Dimensions, ScrollView, Button } from 'react-native';
 import { Box, VStack, HStack, Modal } from 'native-base';
 import { DefText, DefInput, DefButton } from '../common/BOOTSTRAP';
@@ -6,8 +6,32 @@ import { colorSelect, fsize, fweight } from '../common/StyleCommon';
 import { phoneFormat } from '../common/DataFunction';
 import {connect} from 'react-redux';
 import { actionCreators as UserAction } from '../redux/module/action/UserAction';
+import ImagePicker from 'react-native-image-crop-picker';
+import HeaderHome from '../components/HeaderHome';
+import ApiExpert from '../ApiExpert';
+import RenderHtml from 'react-native-render-html';
+import StyleHtml from '../common/StyleHtml';
+import YoutubePlayer from "react-native-youtube-iframe";
+import Font from '../common/Font';
+import { Vimeo } from 'react-native-vimeo-iframe';
 
 const {width, height} = Dimensions.get("window");
+
+const systemFonts = [...Font.SCoreDreamR, 'S-CoreDream-4Regular'];
+
+const WebRender = React.memo(function WebRender({html}) {
+    return(
+        <RenderHtml
+            source={{html:html}}
+            ignoredStyles={[ 'width', 'height', 'margin', 'padding']}
+            ignoredTags={['head', 'script', 'src']}
+            imagesMaxWidth={width - 40}
+            contentWidth={width}
+            tagsStyles={StyleHtml}
+            systemFonts={systemFonts}
+        /> 
+    )
+})
 
 const ExpertImageSelect1 = (props) => {
 
@@ -16,32 +40,137 @@ const ExpertImageSelect1 = (props) => {
     const [infoModal, setInfoModal] = useState(false);
     const [cameraModal, setCameraModal] = useState(false);
 
-    const nextNavigation = () => {
-        navigation.navigate("ExpertImageConfirm");
-        setCameraModal(false);
+    const [appLoading, setAppLoading] = useState(true);
+    const [appText, setAppText] = useState("");
+    const [videoPlay, setVideoPlay] = useState("pause");
+
+    const onStateChange = useCallback((state) => {
+        if(state === "ended"){
+            setVideoPlay("pause");
+        }
+    })
+
+    const appTextApi = async () => {
+        await setAppLoading(true);
+        await ApiExpert.send('start_app', {'id':userInfo.id}, (args)=>{
+
+            let resultItem = args.resultItem;
+            let arrItems = args.arrItems;
+    
+            if(resultItem.result === 'Y' && arrItems) {
+               console.log('앱 시작시 튜토리얼 확인하기 보기: ', arrItems);
+               //setAiPrice(arrItems);
+               setAppText(arrItems);
+            }else{
+               console.log('앱 시작시 튜토리얼 실패!', resultItem);
+               
+            }
+        });
+        await setAppLoading(false);
     }
+
+    useEffect(()=> {
+        appTextApi();
+    }, [])
+
+    const nextNavigation = () => {
+
+        navigation.navigate("ExpertImageConfirm", {"profileImage":profileImage});
+        
+    }
+
+
+    const [profileImage, setProfileImage] = useState([]);
+    const imgSelected = () => {
+        ImagePicker.openPicker({
+            width: width,
+            height: width,
+            cropping: false,
+            compressImageMaxWidth: width * 1.5,
+            compressImageMaxHeight: width * 1.5,
+            compressImageQuality: 0.7,
+            multiple:true
+          }).then(image => {
+            console.log('이미지 선택....',image);
+            setProfileImage(image);
+          }).catch(e => {
+            setCameraModal(false);
+            ToastMessage("갤러리 선택을 취소하셨습니다.");
+          });
+    }
+
+    const cameraSelected = () => {
+        ImagePicker.openCamera({
+            width: width,
+            height: width,
+            cropping: true,
+            compressImageMaxWidth: width * 1.5,
+            compressImageMaxHeight: width * 1.5,
+            compressImageQuality: 0.7,
+            multiple:false
+          }).then(image => {
+            console.log(image);
+            setProfileImage(image);
+          }).catch(e => {
+            console.log(Platform.OS, e.message);
+            setCameraModal(false);
+            if(e.message == "Cannot run camera on simulator"){
+                ToastMessage("카메라를 실행할 수 없습니다.");
+            }else{
+                ToastMessage("카메라 촬영을 취소하셨습니다.");
+            }
+            
+          });
+          
+    }
+
+    useEffect(()=> {
+        if(profileImage != ""){
+            //addImageSubmit()
+            nextNavigation();
+            setCameraModal(false);
+            //console.log('이미지 확인,,', aiImage);
+        }
+    }, [profileImage])
+
+    const videoCallbacks = {
+        timeupdate: (data) => console.log('timeupdate: ', data),
+        play: (data) => console.log('play: ', data),
+        pause: (data) => console.log('pause: ', data),
+        fullscreenchange: (data) => console.log('fullscreenchange: ', data),
+        ended: (data) => console.log('ended: ', data),
+        controlschange: (data) => console.log('controlschange: ', data),
+      };
+      
 
     return (
         <Box flex={1} backgroundColor='#fff' justifyContent={'space-between'}>
-            <Box>
-                <Box position={'absolute'} top='20px' right='25px'>
-                    <TouchableOpacity onPress={()=>setInfoModal(true)}>
-                        <Image 
-                            source={require("../images/keepIcon.png")}
-                            alt='이사보관서비스란?'
-                            style={{
-                                width:21,
-                                height:21,
-                                resizeMode:'contain'
-                            }}
-                        />
-                    </TouchableOpacity>
-                </Box>
-            </Box>
+            {/* <HeaderHome /> */}
+            <ScrollView>
+                {
+                    appText != "" &&
+                    appText.expertImgCate == "이미지" ?
+                    <WebRender html={appText.expertImgTuto} />
+                    :
+                    // <YoutubePlayer
+                    //     height={400}
+                    //     play={videoPlay}
+                    //     videoId={appText.expertImgTutoVideo}
+                    //     onChangeState={onStateChange}
+                    // />
+                    <Vimeo
+                        videoId={appText.expertImgTutoVideo}
+                        params={'api=1&autoplay=0'}
+                        handlers={videoCallbacks}
+                    />
+                }
+            </ScrollView>
             <Box px='25px' py='20px' backgroundColor={'#fff'} borderTopLeftRadius={20} borderTopRightRadius={20} shadow={9}>
-        
-                <DefText text="이제 전문가님이 보이는 사진을 올릴 차례입니다." style={[styles.titleText]} />
-                <DefText text={"내집이사 전문가가 되시면 내집이사에서\n모든과정을 도와드립니다.`"} style={[styles.contentText, {marginTop:10}]}/>
+                {
+                    (appText != "" &&
+                    appText.expertImgInfo != "") &&
+                    <WebRender html={appText.expertImgInfo} />
+                }
                 <TouchableOpacity onPress={()=>setCameraModal(true)}  style={[styles.startButton]}>
                     <DefText text="시작하기" style={[styles.startButtonText]} />
                 </TouchableOpacity>
@@ -103,13 +232,13 @@ const ExpertImageSelect1 = (props) => {
                     <Modal.Body py='25px' px='20px'>
                         <DefText text={"프로필 이미지 및 업체와 관련된\n이미지를 등록합니다."} style={[styles.cameraTitle]}/>
                         <HStack justifyContent={'space-between'} mt='25px'>
-                            <TouchableOpacity onPress={nextNavigation} style={[styles.modalButton, colorSelect.black]}>
+                            <TouchableOpacity onPress={imgSelected} style={[styles.modalButton, colorSelect.black]}>
                                 <HStack alignItems={'center'}>
                                     <Image source={require('../images/aiGallIcon.png')} alt='갤러리' style={{width:22, height:19, resizeMode:'contain'}} />
                                     <DefText text='갤러리 (앨범)' style={[fweight.m, {color:'#fff', marginLeft:7, lineHeight:19}]} />
                                 </HStack>
                             </TouchableOpacity>
-                            <TouchableOpacity style={[styles.modalButton, colorSelect.sky]}>
+                            <TouchableOpacity onPress={cameraSelected} style={[styles.modalButton, colorSelect.sky]}>
                                 <HStack alignItems={'center'}>
                                     <Image source={require('../images/aiCameraIcon.png')} alt='갤러리' style={{width:22, height:19, resizeMode:'contain'}} />
                                     <DefText text='카메라' style={[fweight.m, {color:'#fff', marginLeft:10, lineHeight:19}]} />

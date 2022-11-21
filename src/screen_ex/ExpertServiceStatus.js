@@ -14,9 +14,13 @@ const ExpertServiceStatus = (props) => {
     const {navigation, member_info, member_update, userInfo} = props;
     
     const [serviceStatus, setServiceStatus] = useState([]);
+
+    const [serviceSelect, setServiceSelect] = useState(["포장 이사", "반포장 이사", "일반 이사"]);
     
     //서비스유형 중복선택
     const serviceStatusSelect = (category) => {
+
+        selectServiceRemove(category);
 
         if(!serviceStatus.includes(category)){
             
@@ -25,6 +29,17 @@ const ExpertServiceStatus = (props) => {
 
             const serviceStatusRe = serviceStatus.filter(item => category !== item);
             setServiceStatus(serviceStatusRe);
+        }
+    }
+
+
+    const selectServiceRemove = (category) => {
+
+        if(serviceSelect.includes(category)){
+            const serviceStatusRe = serviceSelect.filter(item => category !== item);
+            setServiceSelect(serviceStatusRe);
+        }else{
+            setServiceSelect([...serviceSelect, category]);
         }
     }
 
@@ -106,6 +121,15 @@ const ExpertServiceStatus = (props) => {
                         btnStyle={[styles.buttonStyle, serviceStatus.includes('일반 이사') && [colorSelect.sky]]} 
                         textStyle={[styles.btnTextStyle, serviceStatus.includes('일반 이사') && {color:'#fff'}]} 
                     />
+
+                   {
+                        (serviceSelect.length != 3 && serviceSelect.length != 0) &&
+                        <Box mt='20px'>
+                            {/* <DefText text={serviceSelect.join(",") + "에는 참여가 불가능 합니다."} style={[fsize.fs14, {color:'#f00'}]} /> */}
+                            <DefText text={"3가지 모두 선택하는 것이 고객을 많이 만나는 방법입니다."} style={[fsize.fs14]} />
+                        </Box>
+                   }
+
                 </Box>
             </ScrollView>
             <BottomButton 
@@ -123,8 +147,7 @@ const ExpertServiceStatus = (props) => {
 const styles = StyleSheet.create({
     pageTitle:{
         ...fsize.fs14,
-        ...fweight.b,
-        color:'#FF5050'
+        ...fweight.b
     },
     buttonStyle: {
         ...colorSelect.gray,

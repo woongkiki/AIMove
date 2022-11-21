@@ -9,6 +9,7 @@ import { colorSelect, fsize, fweight } from '../common/StyleCommon';
 import Api from '../Api';
 import ToastMessage from '../components/ToastMessage';
 import Swiper from 'react-native-swiper';
+import { BASE_URL } from '../Utils/APIConstant';
 
 const {width, height} = Dimensions.get("window");
 
@@ -18,6 +19,7 @@ const ExpertLastConfirm = (props) => {
 
 
     const [career, setCareer] = useState("");
+    const [profileImage, setProfileImage] = useState([]);
 
     //console.log("최종 서비스 검토", userInfo);
 
@@ -28,10 +30,28 @@ const ExpertLastConfirm = (props) => {
             let arrItems = args.arrItems;
     
             if(resultItem.result === 'Y' && arrItems) {
-               console.log('경력일자 계산: ', resultItem, arrItems);
+               //console.log('경력일자 계산: ', resultItem, arrItems);
                setCareer(arrItems);
             }else{
                console.log('경력일자 실패!', resultItem);
+               // ToastMessage(resultItem.message);
+                // setServiceStartDate("");
+            }
+        });
+    }
+
+
+    const expertProfile = () => {
+        Api.send('expert_profileImageSend', {'ex_id':userInfo.ex_id}, (args)=>{
+
+            let resultItem = args.resultItem;
+            let arrItems = args.arrItems;
+    
+            if(resultItem.result === 'Y' && arrItems) {
+               console.log('프로필 이미지 리스트: ', resultItem, arrItems);
+               setProfileImage(arrItems);
+            }else{
+               console.log('프로필 이미지 실패!', resultItem);
                // ToastMessage(resultItem.message);
                 // setServiceStartDate("");
             }
@@ -67,79 +87,114 @@ const ExpertLastConfirm = (props) => {
             expertInfo();
 
             //navigation.navigate("ExpertLastConfirm");
-            navigation.reset({
-                routes: [{ name: 'ExpertNavi', screen:'PlayMove' }],
-            });    
+            // navigation.reset({
+            //     routes: [{ name: 'ExpertNavi', screen:'PlayMove' }],
+            // });    
+
+            navigation.replace("ExpertNavi", {
+                screen: "PlayMove",
+                params:{
+                    moveCate : "소형 이사" ,
+                    homeCate: "",
+                }
+            })
            console.log(update);
         }
     }
 
     const expertInfo = async () => {
-        const formData = new FormData();
-        formData.append('method', 'expert_info');
-        formData.append('id', userInfo.ex_id);
-        const member_info_list = await member_info(formData);
 
-        console.log('member_info_list:::::',member_info_list);
+        const formData = new FormData();
+        formData.append("method", "expert_myInfos");
+        formData.append("id", userInfo.ex_id);
+
+        const memberInfo = await member_info(formData);
     }
+
+    // const expertInfo = async () => {
+    //     const formData = new FormData();
+    //     formData.append('method', 'expert_info');
+    //     formData.append('id', userInfo.ex_id);
+    //     const member_info_list = await member_info(formData);
+
+    //     console.log('member_info_list:::::',member_info_list);
+    // }
 
 
     useEffect(()=> {
+        expertProfile();
         dateSum();
+
+        console.log(userInfo);
     },[])
 
     return (
         <Box flex={1} backgroundColor='#fff'>
             <SubHeader headerTitle="최종 서비스 검토" navigation={navigation} />
             <ScrollView>
-                <Swiper
-                    loop={true}
-                    height={width / 1.71}
-                    dot={
-                        <Box
-                          style={{
-                            backgroundColor: 'rgba(0,0,0,.3)',
-                            width: 7,
-                            height: 7,
-                            borderRadius: 7,
-                            marginLeft: 7,
-                            marginRight: 7
-                          }}
+                {                    
+                    profileImage != "" ?
+                    <Swiper
+                        loop={true}
+                        height={227}
+                        dot={
+                            <Box
+                            style={{
+                                backgroundColor: 'rgba(0,0,0,.3)',
+                                width: 7,
+                                height: 7,
+                                borderRadius: 7,
+                                marginLeft: 7,
+                                marginRight: 7
+                            }}
+                            />
+                        }
+                        activeDot={
+                            <Box
+                            style={{
+                                backgroundColor: '#fff',
+                                width: 7,
+                                height: 7,
+                                borderRadius: 7,
+                                marginLeft: 7,
+                                marginRight: 7
+                            }}
+                            />
+                        }
+                        paginationStyle={{
+                            bottom: 20
+                        }}
+                    >
+                        {
+                            profileImage.map((item, index) => {
+                                return(
+                                    
+                                    <Image 
+                                        source={{uri:BASE_URL + "/data/file/expert/" + item.f_file}}
+                                        alt="전문가 등록 배너.." 
+                                        style={[{
+                                            width:width,
+                                            height:227,
+                                            resizeMode:'stretch'
+                                        }]}
+                                        key={index}
+                                    />
+                                )
+                            })
+                        }
+                    </Swiper>
+                    :
+                    <Box>
+                        <Image 
+                            source={{ uri: BASE_URL + '/images/bigThumb.png'}}
+                            style={{
+                                width: width,
+                                height: width / 1.71,
+                                resizeMode:'stretch'
+                            }}                                
                         />
-                      }
-                      activeDot={
-                        <Box
-                          style={{
-                            backgroundColor: '#000',
-                            width: 7,
-                            height: 7,
-                            borderRadius: 7,
-                            marginLeft: 7,
-                            marginRight: 7
-                          }}
-                        />
-                      }
-                      paginationStyle={{
-                        bottom: 20
-                      }}
-                >
-                    <Image 
-                        source={require("../images/expertBanner.png")} 
-                        alt="전문가 등록 배너.." 
-                        style={[{
-                            width:width,
-                            height:227
-                        }]}
-                    />
-                    <Image 
-                        source={require("../images/expertBanner.png")} 
-                        alt="전문가 등록 배너.." 
-                        style={[{
-                            width:width,
-                            height:227
-                        }]}
-                    />
-                </Swiper>
+                    </Box>
+                }
                 <Box px='25px' py='20px'>
                     <DefText text={userInfo?.ex_service_name} />
                     <HStack>
@@ -156,15 +211,30 @@ const ExpertLastConfirm = (props) => {
                 </Box>
                 <Box borderTopWidth={7} borderTopColor='#F3F4F5' px='25px' py='20px'>
                     <HStack>
-                        <Image 
-                            source={require("../images/expertEx2.png")}
-                            alt={userInfo.ex_name}
-                            style={[{
-                                width:120,
-                                height:121,
-                                resizeMode:'contain'
-                            }]}
-                        />
+                        {
+                            profileImage != "" ?
+                            <Image 
+                                source={{uri:BASE_URL + "/data/file/expert/" + profileImage[0].f_file}}
+                                alt={userInfo.ex_name}
+                                style={[{
+                                    width:120,
+                                    height:121,
+                                    resizeMode:'stretch',
+                                    borderRadius: 20,
+                                }]}
+                            />
+                            :
+                            <Image 
+                                source={{uri:BASE_URL + "/images/appLogo.png"}}
+                                alt={userInfo.ex_name}
+                                style={[{
+                                    width:120,
+                                    height:121,
+                                    resizeMode:'stretch',
+                                    borderRadius: 20,
+                                }]}
+                            />
+                        }
                         <VStack justifyContent={'space-around'} py='20px' pl='15px' width={width-170}>
                             <HStack alignItems={'flex-end'} mb='10px'>
                                 <DefText text={userInfo?.ex_name} style={[styles.expertTitle]} />
@@ -180,9 +250,70 @@ const ExpertLastConfirm = (props) => {
                     </HStack>
                 </Box>
                 <Box borderTopWidth={7} borderTopColor='#F3F4F5' px='25px' py='20px'>
+                    <DefText text={"전문가님의 서비스를 선택해야하는\n이유가 무엇인가요?"} />
+                    <HStack justifyContent={'space-between'} alignItems='center' mt='20px'>
+                    {
+                        profileImage != "" ?
+                        <Image 
+                            source={{uri:BASE_URL + "/data/file/expert/" + profileImage[0].f_file}}
+                            alt={userInfo.ex_name}
+                            style={[{
+                                width:(width - 50) / 3,
+                                height:(width - 50) / 3,
+                                resizeMode:'stretch',
+                                borderRadius: 20,
+                            }]}
+                        />
+                        :
+                        <Image 
+                            source={{uri:BASE_URL + "/images/appLogo.png"}}
+                            alt={userInfo.ex_name}
+                            style={[{
+                                width:(width - 50) / 3,
+                                height:(width - 50) / 3,
+                                resizeMode:'stretch',
+                                borderRadius: 20,
+                            }]}
+                        />
+                    }
+                        <Box>
+                            <Box>
+                                <Box style={[styles.bubbleBoxTri]} />
+                                <Box style={[styles.bubbleBoxSquare]} >
+                                    <DefText text={userInfo?.ex_select_reason} style={[fsize.fs13]} />
+                                </Box>
+                            </Box>
+                        </Box>
+                    </HStack>
+                    
+                </Box>
+                <Box borderTopWidth={7} borderTopColor='#F3F4F5' px='25px' py='20px'>
                     <DefText text="이사하면서 가장 보람을 느낄 때는 언제입니까?" />
                     <HStack justifyContent={'space-between'} alignItems='center' mt='20px'>
-                        <Image source={require("../images/boramImg.png")} alt="이사전문가" style={{width:(width - 50) / 3, height:(width - 50) / 3, resizeMode:'contain'}} />
+                        {
+                            profileImage != "" ?
+                            <Image 
+                                source={{uri:BASE_URL + "/data/file/expert/" + profileImage[0].f_file}}
+                                alt={userInfo.ex_name}
+                                style={[{
+                                    width:(width - 50) / 3,
+                                    height:(width - 50) / 3,
+                                    resizeMode:'stretch',
+                                    borderRadius: 20,
+                                }]}
+                            />
+                            :
+                            <Image 
+                                source={{uri:BASE_URL + "/images/appLogo.png"}}
+                                alt={userInfo.ex_name}
+                                style={[{
+                                    width:(width - 50) / 3,
+                                    height:(width - 50) / 3,
+                                    resizeMode:'stretch',
+                                    borderRadius: 20,
+                                }]}
+                            />
+                        }
                         <Box>
                             <Box>
                                 <Box style={[styles.bubbleBoxTri]} />

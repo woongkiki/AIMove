@@ -50,6 +50,7 @@ const ExpertInfo2 = (props) => {
         formData.append("ex_service_name", userInfo.ex_service_name);
         formData.append("ex_advantages", userInfo.ex_advantages);
         formData.append("ex_refund", userInfo.ex_refund);
+        formData.append("ex_area", userInfo.ex_area);
         formData.append("register_status", "Y");
         
         //추가
@@ -103,13 +104,14 @@ const ExpertInfo2 = (props) => {
                     <Box mt='20px'>
                         <DefText text="고객님이 전문가님의 서비스를 선택해야 하는 이유가 무엇인가요?" style={[styles.labelTitle]} />
                         <Box>
-                            <DefText text="(충실하게 작성할수록 고객이 선택할 확률이 높습니다.)" style={[styles.labelSmallTitle]} />
+                            {/* <DefText text="(충실하게 작성할수록 고객이 선택할 확률이 높습니다.)" style={[styles.labelSmallTitle]} /> */}
                             <DefInput
-                                placeholder={'이유를 입력해 주세요.'}
-                                inputStyle={{width:width - 50, height:160, borderWidth:1, borderColor:'#CCCCCC', borderRadius:5, paddingTop:10, marginTop:10}}
+                                placeholder={'충실하게 작성할수록 고객이 선택할 확률이 높습니다.'}
+                                inputStyle={{width:width - 50, height:160, borderWidth:1, borderColor:'#CCCCCC', borderRadius:5, paddingTop:10}}
                                 value={serviceReason}
                                 multiline={true}
                                 onChangeText={reasonChange}
+                                textAlignVertical='top'
                             />
                         </Box>
                     </Box>
@@ -122,6 +124,7 @@ const ExpertInfo2 = (props) => {
                                 value={seriviceWorth}
                                 multiline={true}
                                 onChangeText={worthChange}
+                                textAlignVertical='top'
                             />
                         </Box>
                     </Box>

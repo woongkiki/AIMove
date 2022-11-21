@@ -80,9 +80,6 @@ const ExpertInfo1 = (props) => {
     }, []);
 
     useEffect(()=>{
-
-        console.log(categorySelectList);
-
         if(serviceName.length > 0 && categorySelectList.length > 0){
             
             setRightDisalbe(false);
@@ -105,6 +102,7 @@ const ExpertInfo1 = (props) => {
         formData.append("ex_select_reason", userInfo.ex_select_reason);
         formData.append("ex_worth", userInfo.ex_worth);
         formData.append("ex_refund", userInfo.ex_refund);
+        formData.append("ex_area", userInfo.ex_area);
         formData.append("register_status", "Y");
 
         //추가
@@ -119,7 +117,7 @@ const ExpertInfo1 = (props) => {
             expertInfo();
 
             navigation.navigate("ExpertInfo2");
-           console.log(update);
+           //console.log(update);
         }
     }
 
@@ -155,6 +153,7 @@ const ExpertInfo1 = (props) => {
                             value={serviceName}
                             multiline={true}
                             onChangeText={serviceNameChange}
+                            textAlignVertical='top'
                         />
                     </Box>
                     <Box mt='20px'>

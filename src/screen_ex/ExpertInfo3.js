@@ -69,6 +69,7 @@ const ExpertInfo3 = (props) => {
         formData.append("ex_advantages", userInfo.ex_advantages);
         formData.append("ex_select_reason", userInfo.ex_select_reason);
         formData.append("ex_worth", userInfo.ex_worth);
+        formData.append("ex_area", userInfo.ex_area);
         formData.append("register_status", "Y");
 
         //추가
