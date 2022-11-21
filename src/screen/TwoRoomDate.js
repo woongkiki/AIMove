@@ -14,6 +14,19 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 const {width, height} = Dimensions.get("window");
 
+const now = new Date();
+let year = now.getFullYear();
+let month = now.getMonth();
+let dates = now.getDate();
+
+if(month < 10){
+    month =  "0" + month;
+}else{
+    month = month;
+}
+
+let date_1 = new Date(year, month, dates, 8, 0, 0, 0);
+
 Date.prototype.format = function(f) {
     if (!this.valueOf()) return " ";
  
@@ -49,21 +62,7 @@ let twoYearBefore = new Date(today.setFullYear(today.getFullYear() - 2));
 let oneAfter = oneYearLater.format('yyyy-MM-dd');
 let twoBefore = twoYearBefore.format('yyyy-MM-dd');
 
-const now = new Date();
-let year = now.getFullYear();
-let month = now.getMonth();
-let dates = now.getDate();
-
-if(month < 10){
-    month =  "0" + month;
-}else{
-    month = month;
-}
-
-let date_1 = new Date(year, month, dates, 8, 0, 0, 0);
-
-const SmallMoveDate = (props) => {
-
+const TwoRoomDate = (props) => {
     const {navigation, route} = props;
     const {params} = route;
 
@@ -83,6 +82,8 @@ const SmallMoveDate = (props) => {
     const [moveTime, setMoveTime] = useState("");
     const [moveTimeModal, setMoveTimeModal] = useState(false);
     const [rightDisalbe, setRightDisalbe] = useState(true);
+
+    const [defaultDate, setDefaultDate] = useState(date_1);
 
     //달력 날짜 선택
     const selectDate = (date) => {
@@ -108,7 +109,7 @@ const SmallMoveDate = (props) => {
             let arrItems = args.arrItems;
     
             if(resultItem.result === 'Y' && arrItems) {
-               //console.log('손 없는날 결과123213: ', resultItem, arrItems);
+               console.log('손 없는날 결과123213: ', resultItem, arrItems);
                setNoHandDateData(arrItems);
             }else{
                console.log('손 없는날 결과 출력 실패!', resultItem);
@@ -130,6 +131,8 @@ const SmallMoveDate = (props) => {
 
     const timeHandler = (time) => {
 
+        console.log("time", time);
+        setDefaultDate(time);
         setMoveTime(time.format("HH:mm"));
         hideTimePicker();
         //console.log(time.format("HH:mm"));
@@ -137,7 +140,31 @@ const SmallMoveDate = (props) => {
 
     const nextNavigation = () => {
         //console.log('ㄱㄱ');
-        navigation.navigate("SmallMoveHelp", {"bidx":params.bidx, "moveCategory":params.moveCategory, "pakageType":params.pakageType, "personStatus":params.personStatus, "keepStatus":params.keepStatus, "startMoveTool":params.startMoveTool, "startFloor":params.startFloor, "startFloorStatus":params.startFloorStatus, "startAddress": params.startAddress, "startLat": params.startLat, "startLon": params.startLon, "destinationMoveTool":params.destinationMoveTool, "destinationFloor":params.destinationFloor, "destinationAddress":params.destinationAddress, 'destinationFloorStatus':params.destinationFloorStatus, "destinationLat": params.destinationLat, "destinationLon": params.destinationLon, "moveDate":sdates, "moveDatetime":moveTime, 'moveDateKeep':params.moveDateKeep, 'moveInKeep':params.moveInKeep});
+        navigation.navigate("TwoRoomImage", {
+            "houseSize":params.houseSize,
+            "houseSizem2":params.houseSizem2,
+            "houseStructure":params.houseStructure,
+            "houseType":params.houseType,
+            "bigSelectBox":params.bigSelectBox,
+            "moveCategory":params.moveCategory,
+            "pakageType":params.pakageType,
+            "personStatus":params.personStatus,
+            "keepStatus":params.keepStatus, 
+            'moveDateKeep':params.moveDateKeep, 
+            'moveInKeep':params.moveInKeep,
+            'startAddress':params.startAddress,
+            "startMoveTool":params.startMoveTool, 
+            "startFloor":params.startFloor,
+            "startAddrLat": params.startAddrLat,
+            "startAddrLon": params.startAddrLon,
+            "destinationAddress":params.destinationAddress,
+            "destinationMoveTool":params.destinationMoveTool,
+            "destinationFloor":params.destinationFloor,
+            "destinationAddrLat": params.destinationAddrLat, 
+            "destinationAddrLon": params.destinationAddrLon,
+            "moveDate":sdates,
+            "moveDatetime":moveTime
+        })
     }
 
     useEffect(()=>{
@@ -154,7 +181,7 @@ const SmallMoveDate = (props) => {
 
     return (
         <Box flex={1} backgroundColor='#fff'>
-            <SubHeader navigation={navigation} headerTitle='소형이사 (원룸이사) 견적요청' />
+            <SubHeader navigation={navigation} headerTitle='가정집이사 견적요청' />
             <ScrollView>
                 <Box px='25px' py='20px'>
                     <HStack alignItems={'center'} justifyContent='flex-end'>
@@ -234,7 +261,7 @@ const SmallMoveDate = (props) => {
                 onConfirm={timeHandler}
                 onCancel={hideTimePicker}
                 display={'spinner'}
-                date={date_1}
+                date={defaultDate}
             />
             <BottomButton 
                 leftText='이전' 
@@ -271,4 +298,4 @@ const styles = StyleSheet.create({
     }
 })
 
-export default SmallMoveDate;
+export default TwoRoomDate;

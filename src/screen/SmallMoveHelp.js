@@ -21,7 +21,7 @@ const SmallMoveHelp = (props) => {
     const selectCateHandler = (cate) => {
         setSelectCate(cate);
     }
-    console.log(params);
+    console.log('도와줄인력::',params);
 
     useEffect(()=> {
         if(selectCate != ""){
@@ -30,7 +30,7 @@ const SmallMoveHelp = (props) => {
     }, [selectCate]);
 
     const nextNavigation = () => {
-        navigation.navigate("SmallMoveConfirm", {"item":params.item, "moveCategory":params.moveCategory, "pakageType":params.pakageType, "personStatus":params.personStatus, "keepStatus":params.keepStatus, "startMoveTool":params.startMoveTool, "startFloor":params.startFloor, "startAddress": params.startAddress, "destinationMoveTool":params.destinationMoveTool, "destinationFloor":params.destinationFloor, "destinationAddress":params.destinationAddress, "moveDate":params.moveDate, "moveDatetime":params.moveDatetime, 'moveHelp':selectCate });
+        navigation.navigate("SmallMoveConfirm", {"bidx":params.bidx, "moveCategory":params.moveCategory, "pakageType":params.pakageType, "personStatus":params.personStatus, "keepStatus":params.keepStatus, "startMoveTool":params.startMoveTool, "startFloor":params.startFloor, "startFloorStatus":params.startFloorStatus, "startAddress": params.startAddress, "startLat": params.startLat, "startLon": params.startLon, "destinationMoveTool":params.destinationMoveTool, "destinationFloor":params.destinationFloor, "destinationAddress":params.destinationAddress, 'destinationFloorStatus':params.destinationFloorStatus, "destinationLat": params.destinationLat, "destinationLon": params.destinationLon, "moveDate":params.moveDate, "moveDatetime":params.moveDatetime, 'moveHelp':selectCate, 'moveDateKeep':params.moveDateKeep, 'moveInKeep':params.moveInKeep });
     }
 
     return (

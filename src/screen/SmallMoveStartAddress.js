@@ -10,6 +10,7 @@ import ToastMessage from '../components/ToastMessage';
 import Geolocation from 'react-native-geolocation-service';
 import {WebView} from 'react-native-webview';
 import { BASE_URL } from '../Utils/APIConstant';
+import Postcode from '@actbase/react-daum-postcode';
 
 const {width, height} = Dimensions.get("window");
 
@@ -19,7 +20,7 @@ const SmallMoveStartAddress = (props) => {
     const {params} = route;
 
 
-    console.log('출발지', params);
+    //console.log('출발지', params);
 
     const [mapLoading, setMapLoading] = useState(true);
     const [startAddress, setStartAddress] = useState("");
@@ -28,6 +29,21 @@ const SmallMoveStartAddress = (props) => {
     const [longitude, setLongitude] = useState("");
     const [mapUrl, setMapUrl] = useState(BASE_URL + '/mapAddr.php');
     const [rightDisalbe, setRightDisalbe] = useState(true);
+    const [addrModal, setAddrModal] = useState(false);
+    const [addrZip, setAddrZip] = useState("");
+    const [address, setAddress] = useState(""); //주소
+    const [address2, setAddress2] = useState("");
+
+    const addrHandler = (zip, addr1, bname, buildingName, type) => {
+
+        
+        setAddrZip(zip);
+        setAddress(addr1);
+        setInputAddr(addr1);
+
+        setLatitude("");
+        setLongitude("");
+    }
 
     const startAddressChange = (addr) => {
         setStartAddress(addr);
@@ -113,8 +129,13 @@ const SmallMoveStartAddress = (props) => {
     }, [inputAddr]);
 
     const nextNavigation = () => {
-        navigation.navigate("SmallMoveDestinationTool", {"item":params.item, "moveCategory":params.moveCategory, "pakageType":params.pakageType, "personStatus":params.personStatus, "keepStatus":params.keepStatus, "startMoveTool":params.startMoveTool, "startFloor":params.startFloor, "startAddress":inputAddr});
+        navigation.navigate("SmallMoveDestinationTool", {"bidx":params.bidx, "moveCategory":params.moveCategory, "pakageType":params.pakageType, "personStatus":params.personStatus, "keepStatus":params.keepStatus, "startMoveTool":params.startMoveTool, "startFloor":params.startFloor, "startFloorStatus":params.startFloorStatus, "startAddress":inputAddr, "startLat":latitude, "startLon":longitude, 'moveDateKeep':params.moveDateKeep, 'moveInKeep':params.moveInKeep});
     }
+
+
+    useEffect(()=> {
+        console.log("변했어", latitude, longitude)
+    }, [latitude, longitude])
     //console.log(params);
 
     return (
@@ -123,7 +144,7 @@ const SmallMoveStartAddress = (props) => {
             <ScrollView>
                 <Box px='25px' pt='20px' pb='0'>
                     <DefText text="이사 출발 위치는 어디인가요?" style={[styles.pageTitle]} />
-                    <Box mt='15px'>
+                    {/* <Box mt='15px'>
                         <DefInput 
                             placeholder={'주소를 입력해 주세요.'}
                             value={startAddress}
@@ -149,6 +170,21 @@ const SmallMoveStartAddress = (props) => {
                                 />
                             </TouchableOpacity>
                         </Box>
+                    </Box> */}
+                    <Box>
+                        <Box style={[styles.addrBox]}>
+                            {
+                                address != "" ?
+                                <DefText text={address} style={[fsize.fs13, {color:'#000'}]} />
+                                :
+                                <DefText text='주소를 입력하세요.' style={[fsize.fs13, {color:'#BEBEBE'}]} />
+                            }
+                        </Box>
+                        <Box position={'absolute'} top='0' right='0'> 
+                            <TouchableOpacity onPress={()=>setAddrModal(true)} style={[styles.addrSchButton]}>
+                                <DefText text="주소찾기" style={[styles.addrSchButtonText]} />
+                            </TouchableOpacity>
+                        </Box>
                     </Box>
                     <HStack justifyContent={'flex-end'}>
                         <TouchableOpacity onPress={geoPermission} style={[styles.nowSpotButton]}>
@@ -160,29 +196,28 @@ const SmallMoveStartAddress = (props) => {
                         <DefText text={"위도 : " + latitude + ", 경도 : " + longitude} />
                     } */}
                 </Box>
-                <Box width={width} height='225px'>
-                    {
-                        mapLoading ?
-                        <Box justifyContent={'center'} alignItems='center' height={'225px'}>
-                            <ActivityIndicator size='large' color='#333' />
-                        </Box>
-                        :
+                {
+                    (inputAddr != "" || latitude != "") &&
+                    <Box width={width} height='225px'>
                         <WebView
                             originWhitelist={['*']}
                             source={{uri:mapUrl + "?addr=" + inputAddr + "&lat=" + latitude + "&lon=" + longitude}}
                             onMessage={(e)=>{
-                                console.log('e', e.nativeEvent.data);
-                                setStartAddress(e.nativeEvent.data);
-                                setInputAddr(e.nativeEvent.data);
+                                console.log('e', JSON.parse(e.nativeEvent.data));
+                                setStartAddress(JSON.parse(e.nativeEvent.data).addrText);
+                                setInputAddr(JSON.parse(e.nativeEvent.data).addrText);
+                                setAddress(JSON.parse(e.nativeEvent.data).addrText);
+                                setLatitude(JSON.parse(e.nativeEvent.data).lat);
+                                setLongitude(JSON.parse(e.nativeEvent.data).lon);
                             }}
                             style={{
                                 opacity:0.99,
                                 minHeight:1,
                             }}
                         />
-                    }
-                   
-                </Box>
+                    </Box>
+                }
+                
                 {
                     inputAddr != "" &&
                     <Box px='25px' py='20px'>
@@ -205,6 +240,32 @@ const SmallMoveStartAddress = (props) => {
                 rightBtnStyle={ !rightDisalbe ? colorSelect.sky : colorSelect.gray }  
                 rightonPress={nextNavigation}
             />
+            <Modal isOpen={addrModal} onClose={()=>setAddrModal(false)}>
+                <SafeAreaView style={{flex:1, width:width}}>
+                    <HStack justifyContent='space-between' height='50px' alignItems='center' style={{borderBottomWidth:1, borderBottomColor:'#e3e3e3', backgroundColor:'#fff'}} px='20px'>
+                        <DefText text='출발지 주소를 입력해주세요.' style={[fsize.fs15, fweight.b]} />
+                        <TouchableOpacity style={{paddingLeft:20}} onPress={()=>{setAddrModal(false)}}>
+                            <Image source={require('../images/menuClose.png')} alt='닫기' style={{width: width / 19.5, height:  width / 19.5}} resizeMode='contain' />
+                        </TouchableOpacity>
+                    </HStack>
+                    <Postcode
+                        style={{ width: width, flex:1 }}
+                        jsOptions={{ animation: true, hideMapBtn: true }}
+                        onSelected={data => {
+                            //console.log('주소선택완료',data);
+                            let jibun;
+                            if(data.jibunAddress == ""){
+                                jibun = data.autoJibunAddress;
+                            }else{
+                                jibun = data.jibunAddress;
+                            }
+                            addrHandler(data.zonecode, jibun, data.bname, data.buildingName, data.addressType);
+                            setAddrModal(false);
+                        }}
+                        onError={e=>console.log(e)}
+                    />
+                </SafeAreaView>
+            </Modal>
         </Box>
     );
 };
@@ -238,7 +299,25 @@ const styles = StyleSheet.create({
     },
     addrText2: {
         ...fweight.b
-    }
+    },
+    addrBox: {
+        height:50,
+        paddingLeft:15,
+        borderRadius:5,
+        backgroundColor:'#F8F8F8',
+        justifyContent:'center'
+    },
+    addrSchButton: {
+        paddingHorizontal:10,
+        height:50,
+        alignItems:'center',
+        justifyContent:'center',
+    },
+    addrSchButtonText: {
+        ...fsize.fs13,
+        ...fweight.m,
+        color:'#0195FF',
+    },
 })
 
 export default SmallMoveStartAddress;

@@ -8,30 +8,37 @@ import { colorSelect, fsize, fweight } from '../common/StyleCommon';
 import SubHeader from '../components/SubHeader';
 import ToastMessage from '../components/ToastMessage';
 
-const {width, height} = Dimensions.get("window");
+const {width} = Dimensions.get("window");
 
-const SmallMoveCategory = (props) => {
+const TwoRoomCategory = (props) => {
+
 
     const {navigation, route } = props;
     const {params} = route;
+
+    console.log("params", params);
 
     const [moveCategory, setMoveCategory] = useState("");
     const moveCategoryHandler = (category) => { //카테고리 선택
         setMoveCategory(category);
     }
 
-    // useEffect(()=>{
-    //     console.log("params", params);
-    // }, [])
-
     const nextNavigation = () => {
-        navigation.navigate("PackageMoveStatus", {"bidx":params.bidx, "moveCategory":moveCategory})
-    }
+        console.log("123123");
 
+        navigation.navigate("TwoRoomPackage", {
+            "houseSize":params.houseSize,
+            "houseSizem2":params.houseSizem2,
+            "houseStructure":params.houseStructure,
+            "houseType":params.houseType,
+            "bigSelectBox":params.bigSelectBox,
+            "moveCategory":moveCategory
+        })
+    }
 
     return (
         <Box flex={1} backgroundColor='#fff'>
-            <SubHeader navigation={navigation} headerTitle='소형이사 (원룸이사) 견적요청'  />
+            <SubHeader navigation={navigation} headerTitle='가정집 이사 견적요청'  />
             <ScrollView>
                 <Box px='25px' py='20px'>
                     <DefText text={"고객님께 맞는 이사업체를 추천드립니다!"} style={[styles.pageTitle]} />
@@ -85,4 +92,4 @@ const styles = StyleSheet.create({
     }
 })
 
-export default SmallMoveCategory;
+export default TwoRoomCategory;

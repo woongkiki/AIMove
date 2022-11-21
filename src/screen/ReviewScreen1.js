@@ -23,7 +23,10 @@ const startArr = [
 
 const ReviewScreen1 = (props) => {
 
-    const {navigation, userInfo} = props;
+    const {navigation, userInfo, route} = props;
+    const {params} = route;
+
+    console.log(params);
 
     const [reviewpage, setReviewPage] = useState("1");
     const [scoreIdx, setScoreIdx] = useState("");
@@ -87,7 +90,7 @@ const ReviewScreen1 = (props) => {
 
 
     const reviewWriteApi = () => {
-        Api.send('review_insert', {'expert_id':'hmex1659949223', "reviewer":userInfo.id, "score1":score1, "score2":score2, "score3":score3, "score4":score4, "score5":score5, "review_private":memo1, "review_open":memo2}, (args)=>{
+        Api.send('review_insert', {'expert_id':params.expert_id, 'expert_name':params.ex_name, "reviewer":userInfo.id, 'review_name': userInfo.name, "score1":score1, "score2":score2, "score3":score3, "score4":score4, "score5":score5, "review_private":memo1, "review_open":memo2, "bidx":params.bidx, "auction_status":params.moveStatus}, (args)=>{
 
             let resultItem = args.resultItem;
             let arrItems = args.arrItems;
@@ -111,7 +114,7 @@ const ReviewScreen1 = (props) => {
             {
                 reviewpage == "1" && 
                 <Box px='25px' py='20px'>
-                    <DefText text="홍길동 전문가님의 이사서비스가 어땠나요?" style={[styles.scoreTitle]} />
+                    <DefText text={ params.ex_name + " 전문가님의 이사서비스가 어땠나요?"} style={[styles.scoreTitle]} />
                     <Box>
                         <DefText text="이삿짐 분실 없음" style={[styles.scoreLabel]} />
                         <TouchableOpacity onPress={()=>scoreModalHandler("1")}>
@@ -153,7 +156,7 @@ const ReviewScreen1 = (props) => {
                 reviewpage == "2" && 
                 <Box px='25px' py='20px'>
                     <Box>
-                        <DefText text={"홍길동 전문가님께 비공개로\n메모를 남겨주세요."} style={[styles.scoreTitle, {lineHeight:24}]} />
+                        <DefText text={params.ex_name + " 전문가님께 비공개로\n메모를 남겨주세요."} style={[styles.scoreTitle, {lineHeight:24}]} />
                         <DefText text="응원메시지나 건의사항을 남겨보세요" style={[fsize.fs14]} />
                         <DefText text={"다른 고객은 볼 수 없고, 홍길동 전문가님만 볼 수\n있습니다."} style={[fsize.fs14, {marginTop:5}]} />
                         <DefInput 
@@ -174,7 +177,7 @@ const ReviewScreen1 = (props) => {
                         />
                     </Box>
                     <Box mt='30px'>
-                        <DefText text={"홍길동 전문가님에 대한\n공개 후기를 남겨주세요."} style={[styles.scoreTitle, {lineHeight:24}]} />
+                        <DefText text={params.ex_name + " 전문가님에 대한\n공개 후기를 남겨주세요."} style={[styles.scoreTitle, {lineHeight:24}]} />
                         <DefText text="다른 고객들이 참고할 만한 사항을 알려주세요." style={[fsize.fs14]} />
                         <DefText text={"이사 완료 14일 후에 전문가 카드에 후기가 게시됩니다."} style={[fsize.fs14, {marginTop:5}]} />
                         <DefInput 

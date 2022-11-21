@@ -15,7 +15,7 @@ const SmallMovePerson = (props) => {
     const {navigation, route} = props;
     const {params} = route;
 
-    console.log(params);
+    console.log('params2',params);
     const [personStatus, setPersonStatus] = useState("");
 
     const personCategoryHandler = (cate) => {
@@ -25,7 +25,7 @@ const SmallMovePerson = (props) => {
     const nextNavigation = () => {
         //console.log("다음으로....")
         navigation.navigate("SmallMoveKeep", {
-            "item":params.item,
+            "bidx":params.bidx,
             "moveCategory":params.moveCategory,
             "pakageType":params.pakageType,
             "personStatus":personStatus

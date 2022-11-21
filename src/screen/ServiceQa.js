@@ -13,11 +13,11 @@ const {width, height} = Dimensions.get("window");
 
 const ServiceQa = (props) => {
     
-    const {navigation, userInfo} = props;
+    const {navigation, userInfo, route} = props;
+    const {params} = route;
 
     const [qaTitle, setQaTitle] = useState("");
     const [qaContent, setQaContent] = useState("");
-
 
     const qaTitleChange = (text) => {
         setQaTitle(text);
@@ -28,13 +28,14 @@ const ServiceQa = (props) => {
     }
 
     const serviceQaHandler = () => {
-        Api.send('service_action', {'qaTitle':qaTitle, 'qaContent':qaContent, 'id':userInfo.id}, (args)=>{
+        Api.send('service_action', {'qaTitle':qaTitle, 'qaContent':qaContent, 'id':params.m_type === '일반' ? userInfo.id : userInfo.ex_id, 'mname': params.m_type === '일반' ? userInfo.name : userInfo.ex_name, 'se_category':userInfo.m_type}, (args)=>{
             let resultItem = args.resultItem;
             let arrItems = args.arrItems;
     
             if(resultItem.result === 'Y' && arrItems) {
                 //console.log('서비스 문의 실행 성공::::: ', resultItem);
                 ToastMessage(resultItem.message);
+                navigation.goBack();
                 setQaTitle("");
                 setQaContent("");
             }else{

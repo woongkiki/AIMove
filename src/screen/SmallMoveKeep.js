@@ -49,7 +49,7 @@ const SmallMoveKeep = (props) => {
     const {params} = route;
 
 
-    console.log(params);
+    console.log('params3', params);
 
 
     const [keepStatus, setKeepStatus] = useState("");
@@ -122,7 +122,7 @@ const SmallMoveKeep = (props) => {
 
 
     const nextNavigation = () => {
-        navigation.navigate("SmallMoveStartTool", {"item":params.item, "moveCategory":params.moveCategory, "pakageType":params.pakageType, "personStatus":params.personStatus, "keepStatus":keepStatus})
+        navigation.navigate("SmallMoveStartTool", {"bidx":params.bidx, "moveCategory":params.moveCategory, "pakageType":params.pakageType, "personStatus":params.personStatus, "keepStatus":keepStatus, 'moveDateKeep':moveDate, 'moveInKeep':inDate})
     }
     
 
@@ -175,16 +175,19 @@ const SmallMoveKeep = (props) => {
                             keepStatus == '예' &&
                             <VStack>
                                 <Box mt='20px'>
-                                    <DefText text={"이사 날짜를 선택해 주세요."} style={[styles.labelText]} />
+                                    <DefText text={"지금 계신 곳의 이사 날짜를 선택해 주세요."} style={[styles.labelText]} />
                                     <TouchableOpacity onPress={moveDateOpen} style={[styles.dateButton]}>
                                         <DefText text={ moveDate != "" ? moveDate : '이사 날짜를 선택해 주세요.'} style={[styles.dateButtonText, moveDate != "" && {color:'#000'}]} />
                                     </TouchableOpacity>
                                 </Box>
                                 <Box mt='20px'>
-                                    <DefText text={"입주 예정일을 선택해 주세요."} style={[styles.labelText]} />
+                                    <DefText text={"새로운 곳의 입주 날짜를 선택해 주세요."} style={[styles.labelText]} />
                                     <TouchableOpacity onPress={inDateOpen} style={[styles.dateButton]}>
                                         <DefText text={ inDate != "" ? inDate : '입주 예정일을 입력해 주세요.'} style={[styles.dateButtonText, inDate != "" && {color:'#000'}]} />
                                     </TouchableOpacity>
+                                </Box>
+                                <Box mt='20px'>
+                                    <DefText text={"이사보관료는 이사견적에 포함되지 않습니다.\n이사전문가에게 문의하세요."} style={[fsize.fs14, {lineHeight:20, color:'#f00'}]} />
                                 </Box>
                             </VStack>
                         }
@@ -204,12 +207,16 @@ const SmallMoveKeep = (props) => {
                 mode="date"
                 onConfirm={moveDateConfirm}
                 onCancel={moveDateHide}
+                minimumDate={new Date()}
+                display={'spinner'}
             />
             <DateTimePickerModal
                 isVisible={inDateModal}
                 mode="date"
                 onConfirm={inDateConfirm}
                 onCancel={inDateHide}
+                minimumDate={moveDate != "" && new Date()}
+                display={'spinner'}
             />
             <Modal isOpen={keepInfoModal} onClose={()=>setKeepInfoModal(false)}>
                 <Modal.Content p='0' width={width - 50}>
@@ -233,7 +240,7 @@ const SmallMoveKeep = (props) => {
                                
                             </Box>
                             <Box p='20px'>
-                                <DefText text='보관이사란 원하는 날짜와 장소에 이삿짐을 입고 및 출고 합니다.' style={[styles.modalText]} />
+                                <DefText text='보관이사란 원하는 날짜와 장소에 이삿짐을 입고 및 출고를 해드리는 서비스 입니다.' style={[styles.modalText]} />
                                 <Box mt='20px'>
                                     <DefText text='주의사항' style={[styles.modalText, styles.modalMidText]} />
                                 </Box>
@@ -243,7 +250,7 @@ const SmallMoveKeep = (props) => {
                                 </HStack>
                                 <HStack style={[styles.modalMargin]}>
                                     <DefText text='2. ' style={[styles.modalText]}  />
-                                    <DefText text={"세탁기는 드럼통과 호오스에 괴어있는 물기를\n완전 제거하고 건조시켜 보관합니다.\n고가의 의류, 밍크코트, 가죽 의류 등은 장기간\n보관시 곰팡이가 생길 수 있으니 습기제거제\n(예:물먹는 하마)와 습기를 잘 흡수할 수 있는\n종이류로 겹겹이 포장하는 것이 좋습니다."} style={[styles.modalText]}  />
+                                    <DefText text={"세탁기는 드럼통과 호스에 괴어있는 물기를\n완전 제거하고 건조시켜 보관합니다.\n고가의 의류, 밍크코트, 가죽 의류 등은 장기간\n보관시 곰팡이가 생길 수 있으니 습기제거제\n(예:물먹는 하마)와 습기를 잘 흡수할 수 있는\n종이류로 겹겹이 포장하는 것이 좋습니다."} style={[styles.modalText]}  />
                                 </HStack>
                                 <HStack style={[styles.modalMargin]}>
                                     <DefText text='3. ' style={[styles.modalText]}  />
@@ -259,7 +266,7 @@ const SmallMoveKeep = (props) => {
                                 </HStack>
                                 <HStack style={[styles.modalMargin]}>
                                     <DefText text='6. ' style={[styles.modalText]}  />
-                                    <DefText text={"직접 셀수가 없는 것(볼트, 수저, 젓가락 등)들은 별도로 상담후 계약합니다."} style={[styles.modalText]}  />
+                                    <DefText text={"직접 셀수가 없는 것(볼트, 수저, 젓가락 등)들은 별도로 상담 후 계약합니다."} style={[styles.modalText]}  />
                                 </HStack>
                                 <HStack style={[styles.modalMargin]}>
                                     <DefText text='7. ' style={[styles.modalText]}  />

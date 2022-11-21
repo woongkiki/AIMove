@@ -10,6 +10,7 @@ import ToastMessage from '../components/ToastMessage';
 import Geolocation from 'react-native-geolocation-service';
 import {WebView} from 'react-native-webview';
 import { BASE_URL } from '../Utils/APIConstant';
+import Postcode from '@actbase/react-daum-postcode';
 
 const {width, height} = Dimensions.get("window");
 
@@ -18,7 +19,7 @@ const SmallMoveDestinationAddress = (props) => {
     const {navigation, route} = props;
     const {params} = route;
 
-    console.log('params:::', params);
+    console.log('params1111:::', params);
     const [mapLoading, setMapLoading] = useState(true);
     const [destinationAddr, setDestinationAddr] = useState("");
     const [inputAddr, setInputAddr] = useState("");
@@ -27,6 +28,22 @@ const SmallMoveDestinationAddress = (props) => {
     const [mapUrl, setMapUrl] = useState(BASE_URL + '/mapAddr.php');
     const [rightDisalbe, setRightDisalbe] = useState(true);
 
+    const [addrModal, setAddrModal] = useState(false);
+    const [addrZip, setAddrZip] = useState("");
+    const [address, setAddress] = useState(""); //주소
+    const [address2, setAddress2] = useState("");
+
+    const addrHandler = (zip, addr1, bname, buildingName, type) => {
+
+  
+        setAddrZip(zip);
+        setAddress(addr1);
+        setInputAddr(addr1);
+     
+
+        // setLatitude("");
+        // setLongitude("");
+    }
 
     const destinationAddrHandler = (addr) => {
         setDestinationAddr(addr);
@@ -70,10 +87,17 @@ const SmallMoveDestinationAddress = (props) => {
     }, [inputAddr]);
 
 
+    console.log("params", params);
+
     const nextNavigation = () => {
         //console.log('ㄱㄱ');
-        navigation.navigate("SmallMoveDate", {"item":params.item, "moveCategory":params.moveCategory, "pakageType":params.pakageType, "personStatus":params.personStatus, "keepStatus":params.keepStatus, "startMoveTool":params.startMoveTool, "startFloor":params.startFloor, "startAddress": params.startAddress, "destinationMoveTool":params.destinationMoveTool, "destinationFloor":params.destinationFloor, "destinationAddress":inputAddr});
+        navigation.navigate("SmallMoveDate", {"bidx":params.bidx, "moveCategory":params.moveCategory, "pakageType":params.pakageType, "personStatus":params.personStatus, "keepStatus":params.keepStatus, "startMoveTool":params.startMoveTool, "startFloor":params.startFloor, "startFloorStatus":params.startFloorStatus, "startAddress": params.startAddress, "destinationMoveTool":params.destinationMoveTool, "startLat": params.startLat, "startLon":params.startLon, "destinationFloor":params.destinationFloor, 'destinationFloorStatus':params.destinationFloorStatus, "destinationAddress":inputAddr, "destinationLat":latitude, "destinationLon":longitude, 'moveDateKeep':params.moveDateKeep, 'moveInKeep':params.moveInKeep});
     }
+
+
+    useEffect(()=> {
+        console.log("좌표변함..", latitude, longitude)
+    }, [latitude, longitude])
 
     return (
         <Box flex={1} backgroundColor='#fff'>
@@ -87,30 +111,18 @@ const SmallMoveDestinationAddress = (props) => {
                 <ScrollView>
                     <Box px='25px' pt='20px' pb='0'>
                         <DefText text="이사 도착 위치는 어디인가요?" style={[styles.pageTitle]} />
-                        <Box mt='15px'>
-                            <DefInput 
-                                placeholder={'주소를 입력해 주세요.'}
-                                value={destinationAddr}
-                                onChangeText={destinationAddrHandler}
-                                inputStyle={{
-                                    borderBottomWidth:0,
-                                    backgroundColor:'#F8F8F8',
-                                    paddingLeft:15,
-                                    borderRadius:5
-                                }}
-                                onSubmitEditing={addrSubmit}
-                            />
-                            <Box position='absolute' top='0' right='0'>
-                                <TouchableOpacity style={[styles.schButton]} onPress={addrSubmit}>
-                                    <Image
-                                        source={require('../images/addrSearchIcon.png')}
-                                        alt='검색'
-                                        style={{
-                                            width:16,
-                                            height:16,
-                                            resizeMode:'contain'
-                                        }}
-                                    />
+                        <Box>
+                            <Box style={[styles.addrBox]}>
+                                {
+                                    address != "" ?
+                                    <DefText text={address} style={[fsize.fs13, {color:'#000'}]} />
+                                    :
+                                    <DefText text='주소를 입력하세요.' style={[fsize.fs13, {color:'#BEBEBE'}]} />
+                                }
+                            </Box>
+                            <Box position={'absolute'} top='0' right='0'> 
+                                <TouchableOpacity onPress={()=>setAddrModal(true)} style={[styles.addrSchButton]}>
+                                    <DefText text="주소찾기" style={[styles.addrSchButtonText]} />
                                 </TouchableOpacity>
                             </Box>
                         </Box>
@@ -119,21 +131,33 @@ const SmallMoveDestinationAddress = (props) => {
                             <DefText text={"위도 : " + latitude + ", 경도 : " + longitude} />
                         } */}
                     </Box>
-                    <Box width={width} height='225px' mt='20px'>
-                        <WebView
-                            originWhitelist={['*']}
-                            source={{uri:mapUrl + "?addr=" + inputAddr}}
-                            // onMessage={(e)=>{
-                            //     console.log('e', e.nativeEvent.data);
-                            //     setStartAddress(e.nativeEvent.data);
-                            //     setInputAddr(e.nativeEvent.data);
-                            // }}
-                            style={{
-                                opacity:0.99,
-                                minHeight:1,
-                            }}
-                        />
-                    </Box>
+                    {
+                         inputAddr != "" &&
+                         <Box width={width} height='225px' mt='20px'>
+                            <WebView
+                                originWhitelist={['*']}
+                                source={{uri:mapUrl + "?addr=" + inputAddr}}
+                                // onMessage={(e)=>{
+                                //     console.log('e', e.nativeEvent.data);
+                                //     setStartAddress(e.nativeEvent.data);
+                                //     setInputAddr(e.nativeEvent.data);
+                                // }}
+                                onMessage={(e)=>{
+                                    console.log('e', JSON.parse(e.nativeEvent.data));
+                                    setDestinationAddr(JSON.parse(e.nativeEvent.data).addrText);
+                                    setInputAddr(JSON.parse(e.nativeEvent.data).addrText);
+                                    setAddress(JSON.parse(e.nativeEvent.data).addrText);
+                                    setLatitude(JSON.parse(e.nativeEvent.data).lat);
+                                    setLongitude(JSON.parse(e.nativeEvent.data).lon);
+                                }}
+                                style={{
+                                    opacity:0.99,
+                                    minHeight:1,
+                                }}
+                            />
+                        </Box>
+                    }
+                    
                     {
                         inputAddr != "" &&
                         <Box px='25px' py='20px'>
@@ -157,6 +181,33 @@ const SmallMoveDestinationAddress = (props) => {
                 rightBtnStyle={ !rightDisalbe ? colorSelect.sky : colorSelect.gray }  
                 rightonPress={nextNavigation}
             />
+            <Modal isOpen={addrModal} onClose={()=>setAddrModal(false)}>
+                <SafeAreaView style={{flex:1, width:width}}>
+                    <HStack justifyContent='space-between' height='50px' alignItems='center' style={{borderBottomWidth:1, borderBottomColor:'#e3e3e3', backgroundColor:'#fff'}} px='20px'>
+                        <DefText text='도착지 주소를 입력해주세요.' style={[fsize.fs15, fweight.b]} />
+                        <TouchableOpacity style={{paddingLeft:20}} onPress={()=>{setAddrModal(false)}}>
+                            <Image source={require('../images/menuClose.png')} alt='닫기' style={{width: width / 19.5, height:  width / 19.5}} resizeMode='contain' />
+                        </TouchableOpacity>
+                    </HStack>
+                    <Postcode
+                        style={{ width: width, flex:1 }}
+                        jsOptions={{ animation: true, hideMapBtn: true }}
+                        onSelected={data => {
+                            console.log('주소선택완료',data);
+
+                            let jibun;
+                            if(data.jibunAddress == ""){
+                                jibun = data.autoJibunAddress;
+                            }else{
+                                jibun = data.jibunAddress;
+                            }
+                            addrHandler(data.zonecode, jibun, data.bname, data.buildingName, data.addressType);
+                            setAddrModal(false);
+                        }}
+                        onError={e=>console.log(e)}
+                    />
+                </SafeAreaView>
+            </Modal>
         </Box>
     );
 };
@@ -190,7 +241,25 @@ const styles = StyleSheet.create({
     },
     addrText2: {
         ...fweight.b
-    }
+    },
+    addrBox: {
+        height:50,
+        paddingLeft:15,
+        borderRadius:5,
+        backgroundColor:'#F8F8F8',
+        justifyContent:'center'
+    },
+    addrSchButton: {
+        paddingHorizontal:10,
+        height:50,
+        alignItems:'center',
+        justifyContent:'center',
+    },
+    addrSchButtonText: {
+        ...fsize.fs13,
+        ...fweight.m,
+        color:'#0195FF',
+    },
 })
 
 export default SmallMoveDestinationAddress;

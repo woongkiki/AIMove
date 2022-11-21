@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import { TouchableOpacity, StyleSheet, Dimensions, Image, ScrollView, Platform, SafeAreaView, Animated } from 'react-native';
-import { Box, VStack, HStack, Modal } from 'native-base';
+import { Box, VStack, HStack, Modal, Select } from 'native-base';
 import { DefText, DefButton, DefInput, BottomButton } from '../common/BOOTSTRAP';
 import Font from '../common/Font';
 import { numberFormat, textLengthOverCut } from '../common/DataFunction';
@@ -15,11 +15,12 @@ const SmallMoveStartTool = (props) => {
     const {navigation, route} = props;
     const {params} = route;
 
-    //console.log('params', params);
+    console.log('params4', params);
 
     const [startMoveTool, setStartMoveTool] = useState('');
     const [floorInfo, setFloorInfo] = useState("");
     const [rightDisalbe, setRightDisalbe] = useState(true);
+    const [floorStatus, setFloorStatus] = useState("");
 
     const startMoveToolHandler = (cate) => {
         setStartMoveTool(cate);
@@ -31,7 +32,7 @@ const SmallMoveStartTool = (props) => {
 
     const nextNavigation = () => {
         //console.log('ㄱㄱ');
-        navigation.navigate("SmallMoveStartAddress", {"item":params.item, "moveCategory":params.moveCategory, "pakageType":params.pakageType, "personStatus":params.personStatus, "keepStatus":params.keepStatus, "startMoveTool":startMoveTool, "startFloor":floorInfo});
+        navigation.navigate("SmallMoveStartAddress", {"bidx":params.bidx, "moveCategory":params.moveCategory, "pakageType":params.pakageType, "personStatus":params.personStatus, "keepStatus":params.keepStatus, "startMoveTool":startMoveTool, "startFloor":floorInfo, "startFloorStatus":floorStatus, 'moveDateKeep':params.moveDateKeep, 'moveInKeep':params.moveInKeep});
     }
 
     useEffect(()=> {
@@ -65,12 +66,32 @@ const SmallMoveStartTool = (props) => {
                         <Box mt='20px'>
                             <DefText text='층수' style={[styles.labelText]} />
                             <Box>
-                                <DefInput 
-                                    placeholder={'층수를 입력하세요'}
-                                    value={floorInfo}
-                                    onChangeText={floorTextChange}
-                                    keyboardType='number-pad'
-                                />
+                                <HStack width={width-50} justifyContent={'space-between'}>
+                                    <Select
+                                        selectedValue={floorStatus}
+                                        width={ (width - 50) * 0.3 }
+                                        height='50px'
+                                        fontSize={14}
+                                        borderWidth={0}
+                                        backgroundColor={'#fff'}
+                                        borderBottomWidth={1}
+                                        borderBottomColor='#BEBEBE'
+                                        onValueChange={(val) => setFloorStatus(val)}
+                                        placeholder='선택'
+                                    >
+                                        <Select.Item label='지상' value='지상' />
+                                        <Select.Item label='지하' value='지하' />
+                                    </Select>
+                                    <Box width={(width - 50) * 0.65}>
+                                        <DefInput 
+                                            placeholder={'층수를 입력하세요'}
+                                            value={floorInfo}
+                                            onChangeText={floorTextChange}
+                                            keyboardType='number-pad'
+                                            disabled={ floorStatus != "" ? true : false}
+                                        />
+                                    </Box>
+                                </HStack>
                                 <Box position='absolute' bottom='15px' right='0'>
                                     <DefText text='층' style={[styles.labelText]}  />
                                 </Box>
@@ -98,6 +119,10 @@ const SmallMoveStartTool = (props) => {
                             btnStyle={[styles.buttonStyle, startMoveTool == '사다리차' ? colorSelect.sky : colorSelect.gray]} 
                             textStyle={[styles.btnTextStyle, startMoveTool == '사다리차' ? {color:'#fff'} : {color:'#000'}]} 
                         />
+                    }
+                    {
+                        startMoveTool == '사다리차' &&
+                        <DefText text={"사다리차 비용은 이사 견적에 포함되지 않으며\n현장에서 결제하시면 됩니다."} style={[{marginTop:20, color:'#666'}, fsize.fs14]} />
                     }
                 </Box>
             </ScrollView>
