@@ -10,7 +10,7 @@ class Api {
         this.state = {
             isLoading   : false,
             url         : 'https://mymoving.cafe24.com',
-            path        : '/adm/api/',
+            path        : '/adm/api_expert/',
             option  : {
                 method: 'POST',
                 headers: { 'Content-Type': 'multipart/form-data', },
