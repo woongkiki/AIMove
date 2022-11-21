@@ -5,22 +5,61 @@ import { DefText, DefButton, DefInput, BottomButton } from '../common/BOOTSTRAP'
 import Font from '../common/Font';
 import { numberFormat, textLengthOverCut } from '../common/DataFunction';
 import { colorSelect, fsize, fweight } from '../common/StyleCommon';
-
+import {connect} from 'react-redux';
+import { actionCreators as UserAction } from '../redux/module/action/UserAction';
 import SubHeader from '../components/SubHeader';
 import ToastMessage from '../components/ToastMessage';
+import Api from '../Api';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import moment from 'moment';
+import Postcode from '@actbase/react-daum-postcode';
 
 const {width, height} = Dimensions.get('window');
 
 const btnHalf = (width - 50) * 0.48;
 
+const now = new Date();
+const date = moment(now); // Thursday Feb 2015
+const dow = date.format('YYYY-MM-DD HH:mm:ss');
+
+
+//console.log("year", new Date("2022-5-20 10:30:20"));
+//console.log("year", new Date( year + "-" +month + "-" + dates + "08:00:00"));
+
 const MoveType = (props) => {
 
-    const {navigation} = props;
+    const {navigation, userInfo} = props;
 
     const [type, setType] = useState(""); //이사유형 선택
     const [homeType, setHomeType] = useState(""); //가정집 이사 선택시 사진, 방문 선택
+    const [addrZip, setAddrZip] = useState("");
     const [address, setAddress] = useState(""); //주소
+    const [address2, setAddress2] = useState("");
     const [moveDate, setMoveDate] = useState(""); //이사 날짜
+    const [addrModal, setAddrModal] = useState(false);
+    const [dateModal, setDateModal] = useState(false);
+
+
+    const addrHandler = (zip, addr1, bname, buildingName, type) => {
+        setAddrZip(zip);
+        setAddress(addr1);
+    }
+
+    const addrText2Handler = (text) => {
+        setAddress2(text);
+    }
+
+    const timeHandler = (time) => {
+
+        console.log('moment::::',moment(time).format("YYYY-MM-DD"));
+        setMoveDate(moment(time).format("YYYY-MM-DD"));
+        hideDatePicker();
+        //console.log(time.format("HH:mm"));
+    }
+
+    const hideDatePicker = () => {
+        setDateModal(false);
+    }
 
     //유형 선택하기
     const typeHandler = (typeText) => {
@@ -40,10 +79,7 @@ const MoveType = (props) => {
         }
     }
 
-    //주소입력
-    const addrHandler = (addr) => {
-        setAddress(addr);
-    }
+
     //이사날짜 입력
     const moveDateHandler = (move) => {
         setMoveDate(move);
@@ -52,38 +88,101 @@ const MoveType = (props) => {
 
     const nextNavigation = () => {
 
-        let nextParams;
-
         if(!type){
             ToastMessage('이사 유형을 선택하세요.');
             return false;
         }
 
-        if(type == '가정집이사'){
-            if(homeType == ""){
-                ToastMessage("가정집 이사를 선택하신경우\n사진으로 이사, 방문 견적 요청 중 하나를 선택하세요.");
-                return false;
-            }
 
-            if(homeType == "방문"){
-                if(!address){
-                    ToastMessage('주소를 입력하세요.');
-                    return false;
-                }
+        Api.send('move_ing', {"type":type, "mid":userInfo.id}, (args)=>{
+
+            let resultItem = args.resultItem;
+            let arrItems = args.arrItems;
     
-                if(!moveDate){
-                    ToastMessage('이사 날짜를 입력하세요.');
-                    return false;
-                }
+            if(resultItem.result === 'Y' && arrItems) {
+                console.log('이미 진행중인 경매내역 없으면 성공!', resultItem);
+                navigation.navigate("CameraSmallHome");
+            }else{
+               console.log('이미 진행중인 경매내역 있으면 die!', resultItem);
+               //setAppInfoVideoKey("");
+               ToastMessage(resultItem.message);
+               return false;
             }
-        }
+        });
+       
+    }
 
-        nextParams = {'type':type, 'homeType':homeType, 'address':address, 'moveDate':moveDate};
 
-        if(type == '소형이사'){
-            navigation.navigate("CameraSmallHome");
-        }
-        console.log(nextParams);
+    //가정집이사 사진으로 이사
+    const twoRoomNavigation = () => {
+        navigation.navigate("TwoRoomSetting");
+    }
+
+    useEffect(()=> {
+        console.log(userInfo);
+    }, [])
+
+    //방문견적요청
+    const visitAcution = () => {
+
+        //house_visit
+
+        Api.send('house_visit', {"mid":userInfo.id, "mname":userInfo.name, "vaddr":address, "vaddr2":address2, "vdate":moveDate,  "moveStatus":"방문"}, (args)=>{
+
+            let resultItem = args.resultItem;
+            let arrItems = args.arrItems;
+    
+            if(resultItem.result === 'Y' && arrItems) {
+            console.log('방문견적요청: ', resultItem);
+            ToastMessage(resultItem.message);
+            navigation.navigate('TabNav', {
+                screen: 'Reservation',
+                params:{
+                    moveCate : "가정집 이사" ,
+                    tabCategory: "찾는중",
+                    twoCate:"방문"
+                }
+            });
+            }else{
+            console.log('방문견적요청 실패!', resultItem);
+            ToastMessage(resultItem.message);
+            }
+        });
+
+        // Api.send('visit_pay', {"mid":userInfo.id, "mname":userInfo.name, "vaddr":address, "vaddr2":address2, "vdate":moveDate, "ex_id":"", "ex_name":"", "moveStatus":"방문"}, (args)=>{
+
+        //     let resultItem = args.resultItem;
+        //     let arrItems = args.arrItems;
+    
+        //     if(resultItem.result === 'Y' && arrItems) {
+        //        console.log('방문견적요청 금액: ', resultItem, arrItems);
+        //        navigation.navigate("VisitAuctionPayModule", {"app_commission":arrItems.app_commission, "commission":arrItems.commission, "def_visit_auction": arrItems.def_visit_auction, "sumsum":arrItems.sumsum, "vat":arrItems.vat, "address":address, "address2":address2, "moveDate":moveDate});
+        //     }else{
+        //        console.log('방문견적요청 금액 실패!', resultItem);
+        //        ToastMessage(resultItem.message);
+        //     }
+        // });
+
+        
+
+        
+    }
+
+
+    const ReservationNavigate = () => {
+        navigation.navigate('TabNav', {
+            screen: 'Reservation',
+            params:{
+                moveCate : "가정집 이사" ,
+                tabCategory: "찾는중",
+                twoCate:"방문"
+            }
+        });
+    }
+
+
+    const carNavigation = () => {
+        navigation.navigate("CarStartAddr");
     }
 
 
@@ -134,18 +233,39 @@ const MoveType = (props) => {
                                     <Box mt='25px'>
                                         <DefText text='주소' style={[styles.labelText]} />
                                         <DefInput 
-                                            placeholder={'주소를 입력해 주세요. (읍면동까지)'}
+                                            placeholder={'주소를 입력해 주세요.'}
                                             value={address}
                                             onChangeText={addrHandler}
                                         />
+                                        <Box position={'absolute'} right='0' bottom='0'> 
+                                            <TouchableOpacity onPress={()=>setAddrModal(true)} style={[styles.addrSchButton]}>
+                                                <DefText text="주소찾기" style={[styles.addrSchButtonText]} />
+                                            </TouchableOpacity>
+                                        </Box>
+                                    </Box>
+                                    <Box >
+                                        <DefInput 
+                                            placeholder={'상세주소'}
+                                            value={address2}
+                                            onChangeText={addrText2Handler}
+                                        />
+                                        <DefText text='전문가와 거래가 되어야 상세주소가 노출되니 안심하세요.' style={[fsize.fs14, {marginTop:15}]} />
                                     </Box>
                                     <Box mt='25px'>
                                         <DefText text='이사 날짜' style={[styles.labelText]} />
-                                        <DefInput 
+                                        <TouchableOpacity onPress={()=>setDateModal(true)} style={[{height:50, borderBottomWidth:1, borderBottomColor:'#BEBEBE', paddingLeft:10, justifyContent:'center'}]}>
+                                            {
+                                                moveDate != "" ?
+                                                <DefText text={moveDate} style={[fsize.fs13, {color:'#000'}]} />
+                                                :
+                                                <DefText text="이사 날짜를 입력해 주세요." style={[fsize.fs13, {color:'#bebebe'}]} />
+                                            }
+                                        </TouchableOpacity>
+                                        {/* <DefInput 
                                             placeholder={'이사 날짜를 입력해 주세요.'}
                                             value={moveDate}
                                             onChangeText={moveDateHandler}
-                                        />
+                                        /> */}
                                     </Box>
                                 </Box>
                             }
@@ -173,7 +293,50 @@ const MoveType = (props) => {
                     }
                 </Box>
             </ScrollView>
-            <BottomButton leftText='이전' rightText='다음' rightonPress={nextNavigation} />
+            {
+                type == '소형이사' && 
+                <BottomButton leftText='이전' rightText='다음' leftonPress={()=>navigation.goBack()} rightonPress={nextNavigation} />
+            }
+            {
+               ( type == '가정집이사' && homeType == '방문') &&
+                <BottomButton leftText='이전' rightText='방문견적요청' leftonPress={()=>navigation.goBack()}  rightonPress={visitAcution}  />
+            }
+            {
+               ( type == '가정집이사' && homeType == '사진') &&
+                <BottomButton leftText='이전' rightText='다음' leftonPress={()=>navigation.goBack()}  rightonPress={twoRoomNavigation}  />
+            }
+            {
+                type == '차량' &&
+                <BottomButton leftText='이전' rightText='다음' leftonPress={()=>navigation.goBack()}  rightonPress={carNavigation}  />
+            }
+
+            <DateTimePickerModal
+                isVisible={dateModal}
+                mode="date"
+                onConfirm={timeHandler}
+                onCancel={hideDatePicker}
+                minimumDate={new Date()}
+            />
+            <Modal isOpen={addrModal} onClose={()=>setAddrModal(false)}>
+                <SafeAreaView style={{flex:1, width:width}}>
+                    <HStack justifyContent='space-between' height='50px' alignItems='center' style={{borderBottomWidth:1, borderBottomColor:'#e3e3e3', backgroundColor:'#fff'}} px='20px'>
+                        <DefText text='방문견적을 위해 주소를 입력해주세요' style={[fsize.fs15, fweight.b]} />
+                        <TouchableOpacity style={{paddingLeft:20}} onPress={()=>{setAddrModal(false)}}>
+                            <Image source={require('../images/menuClose.png')} alt='닫기' style={{width: width / 19.5, height:  width / 19.5}} resizeMode='contain' />
+                        </TouchableOpacity>
+                    </HStack>
+                    <Postcode
+                        style={{ width: width, flex:1 }}
+                        jsOptions={{ animation: true, hideMapBtn: true }}
+                        onSelected={data => {
+                            //console.log('주소선택완료',data);
+                            addrHandler(data.zonecode, data.address, data.bname, data.buildingName, data.addressType);
+                            setAddrModal(false);
+                        }}
+                        onError={e=>console.log(e)}
+                    />
+                </SafeAreaView>
+            </Modal>
         </Box>
     );
 };
@@ -208,7 +371,25 @@ const styles = StyleSheet.create({
     labelText: {
         ...fsize.fs14,
         ...fweight.b
-    }
+    },
+    addrSchButton: {
+        paddingHorizontal:10,
+        height:50,
+        alignItems:'center',
+        justifyContent:'center',
+    },
+    addrSchButtonText: {
+        ...fsize.fs13,
+        ...fweight.m,
+        color:'#0195FF',
+    },
 })
 
-export default MoveType;
+export default connect(
+    ({ User }) => ({
+        userInfo: User.userInfo, //회원정보
+    }),
+    (dispatch) => ({
+        member_login: (user) => dispatch(UserAction.member_login(user)), //로그인
+    })
+)(MoveType);

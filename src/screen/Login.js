@@ -40,7 +40,7 @@ const Login = (props) => {
                 <Box px='25px' py='20px'>
                     <Box alignItems={'center'} mt='20px' mb='40px'>
                         <Image 
-                            source={require("../images/loginLogo.png")}
+                            source={require("../images/loginLogoNew1024.png")}
                             alt="내집이사"
                             style={{
                                 width: (width - 50) * 0.18,

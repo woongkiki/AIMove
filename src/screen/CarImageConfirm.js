@@ -39,13 +39,16 @@ const animationImages = [
     'https://mymoving.cafe24.com/images/loginImg5.png',
 ]
 
-const ImageConfirm = (props) => {
 
+const CarImageConfirm = (props) => {
     const {navigation, route, userInfo} = props;
     const { params } = route;
 
 
-    //console.log("params", params);
+    console.log("params", params);
+
+   
+
 
     const [imageNumber, setImageNumber] = useState("0");
     const [imageLoading, setImageLoading] = useState(false);
@@ -53,17 +56,17 @@ const ImageConfirm = (props) => {
 
     const [aiImage, setAiImage] = useState([]);
 
-    const [appText, setAppText] = useState("");
-
     const imgSelected = () => {
         ImagePicker.openPicker({
-            //cropping: true,
+            //width: 400,
+            //height: 400,
             compressImageMaxWidth: width * 1.5,
             compressImageMaxHeight: 450,
             compressImageQuality: 0.7,
+            //cropping: true,
             multiple:true
           }).then(image => {
-            console.log('이미지 선택123....',image);
+            console.log('이미지 선택....',image);
 
             let aiAdd = [...aiImage];
 
@@ -77,7 +80,6 @@ const ImageConfirm = (props) => {
 
             //setAiImage({...aiImage, image});
           }).catch(e => {
-            console.log(e);
             setCameraModal(false);
             ToastMessage("갤러리 선택을 취소하셨습니다.");
           });
@@ -85,6 +87,8 @@ const ImageConfirm = (props) => {
 
     const cameraSelected = () => {
         ImagePicker.openCamera({
+            //width: 400,
+            //height: 400,
             compressImageMaxWidth: width * 1.5,
             compressImageMaxHeight: 450,
             compressImageQuality: 0.7,
@@ -92,8 +96,6 @@ const ImageConfirm = (props) => {
           }).then(image => {
             console.log(image);
             setAiImage([...aiImage, image]);
-
-            setCameraModal(false);
           }).catch(e => {
             console.log(Platform.OS, e.message);
             setCameraModal(false);
@@ -106,23 +108,6 @@ const ImageConfirm = (props) => {
           });
           
     }
-
-
-    const pageTextApi = () => {
-        Api.send('text_smallCamera', {}, (args)=>{
-
-            let resultItem = args.resultItem;
-            let arrItems = args.arrItems;
-    
-            if(resultItem.result === 'Y' && arrItems) {
-               console.log('페이지 문구 보기: ', arrItems);
-               setAppText(arrItems);
-            }else{
-               console.log('페이지 문구 출력 실패!', resultItem);
-               //setAppInfoVideoKey("");
-            }
-        });
-    }
     
     useEffect(()=> {
         
@@ -130,12 +115,12 @@ const ImageConfirm = (props) => {
 
             let count = 0;
             let countInterval = setInterval(()=> {
-                setImageNumber((count++) % 7)
+                setImageNumber((count++) % 5)
                 console.log('count', count);
 
                 if(count == 20){
                     clearInterval(countInterval);
-                    //navigation.navigate("MoveConfirm");
+                    navigation.navigate("MoveConfirm");
                     //navigation.goBack();
                 }
 
@@ -178,7 +163,7 @@ const ImageConfirm = (props) => {
         await  setImageLoading(true);
 
         const formData = new FormData();
-        formData.append('method', 'ai_upload');
+        formData.append('method', 'car_request');
         //console.log('imageArr',params.aiImage);
 
         aiImage.map((item, index) => {
@@ -191,16 +176,27 @@ const ImageConfirm = (props) => {
             
             return formData.append('files[]', {'uri' : item.path, 'name': fullName, 'size': item.size, 'type': item.mime});
         })
-        formData.append('id', userInfo.id);
+        formData.append('mid', userInfo.id);
+        formData.append("mname", userInfo.name);
+        formData.append("mphone", userInfo.phoneNumber);
+        formData.append("startAddress", params.startAddress);
+        formData.append("startLat", params.startLat);
+        formData.append("startLon", params.startLon);
+        formData.append("destinationAddress", params.destinationAddress);
+        formData.append("destinationLat", params.destinationLat);
+        formData.append("destinationLon", params.destinationLon);
+        formData.append("moveDate", params.moveDate);
+        formData.append("moveDatetime", params.moveDatetime);
+       
 
         const upload = await Api.multipartRequest(formData);
         
+        console.log("upload", upload);
        
         if(upload.result){
             await setImageLoading(false);
             await navigateMoveConfirm(upload.data);
-
-            //console.log('upload::::::',upload);
+            await ToastMessage(upload.msg);
         }
 
         // if(upload.result){
@@ -210,21 +206,31 @@ const ImageConfirm = (props) => {
         // }
 
          console.log("ai_upload::::", upload);
-
+        
         //navigation.navigate("MoveConfirm");
     }
 
 
-    const navigateMoveConfirm = (bidx) => {
-        navigation.navigate("MoveConfirm", {"bidx":bidx, "w":""});
+    const navigateMoveConfirm = () => {
+        //navigation.navigate("MoveConfirm", {"bidx":bidx});
+        // navigation.reset({
+        //     routes: [{ name: 'TabNav', screen: 'Reservation' }],
+        // });
+        navigation.navigate('TabNav', {
+            screen: 'Reservation',
+            params:{
+                moveCate : "차량제공" ,
+                tabCategory: "찾는중",
+                twoCate:""
+            }
+        });
+
     }
 
-
     useEffect(()=> {
-        if(params != ""){
-            setAiImage(params.aiImage);
+        if(params.carImage != ""){
+            setAiImage(params.carImage);
         }
-        pageTextApi();
     }, [])
 
     useEffect(()=> {
@@ -234,13 +240,10 @@ const ImageConfirm = (props) => {
 
     return (
         <Box flex={1} backgroundColor='#fff'>
-            <SubHeader navigation={navigation} headerTitle='소형이사 (원룸이사) 견적요청' />
+            {/* <SubHeader navigation={navigation} headerTitle='차량만 대여' /> */}
             <ScrollView>
                 <Box px='25px' py='20px'>
-                    {
-                        appText != "" &&
-                        <DefText text={appText.smallCameraText} style={[styles.infoText]} />
-                    }
+                    <DefText text={"촬영한 이미지를 최종적으로 확인해 주세요."} style={[styles.infoText]} />
                     <HStack flexWrap={'wrap'} mt='20px' >
                         {
                             aiImage != "" &&
@@ -269,11 +272,11 @@ const ImageConfirm = (props) => {
                     </HStack>
                 </Box>
             </ScrollView>
-            <BottomButton leftText='이전' rightText='업로드 및 AI 분석' leftonPress={()=>navigation.goBack()} rightonPress={imageLoadingGo} />
+            <BottomButton leftText='이전' rightText='차량대여요청' leftonPress={()=>navigation.goBack()} rightonPress={imageLoadingGo} />
             {
                 imageLoading &&
                 <Box flex={1} backgroundColor='rgba(0,0,0,0.8)' height={height} width={width} position='absolute' top='0' right='0' justifyContent={'center'} alignItems='center'>
-                    <DefText text='AI 분석 중입니다.' style={[styles.lodingText, {marginBottom:50}]} />
+                    <DefText text='차량제공 견적 요청중입니다.' style={[styles.lodingText, {marginBottom:50}]} />
                     <Image
                         source={{uri:animationImages[imageNumber]}}
                         style={{
@@ -362,4 +365,4 @@ export default connect(
     (dispatch) => ({
         member_login: (user) => dispatch(UserAction.member_login(user)), //로그인
     })
-)(ImageConfirm);
+)(CarImageConfirm);

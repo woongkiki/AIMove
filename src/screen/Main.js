@@ -51,6 +51,62 @@ import ExpertInfo1 from '../screen_ex/ExpertInfo1';
 import ExpertInfo2 from '../screen_ex/ExpertInfo2';
 import ExpertInfo3 from '../screen_ex/ExpertInfo3';
 import ExpertLastConfirm from '../screen_ex/ExpertLastConfirm';
+import ExpertAuctionView from '../screen_ex/ExpertAuctionView';
+import ExpertAuction from '../screen_ex/ExpertAuction';
+import ExpertMessageView from '../screen_ex/ExpertMessageView';
+import ExpertProfileSetting from '../screen_ex/ExpertProfileSetting';
+import ServiceQaList from './ServiceQaList';
+import ServiceQaView from './ServiceQaView';
+import AppNotice from './AppNotice';
+import ExpertCerti from '../screen_ex/ExpertCerti';
+import ExpertCard from '../screen_ex/ExpertCard';
+import ExpertCardForm from '../screen_ex/ExpertCardForm';
+import ExpertNotice from '../screen_ex/ExpertNotice';
+import ExpertNoticeView from '../screen_ex/ExpertNoticeView';
+import TwoRoomSetting from './TwoRoomSetting';
+import TwoRoomSetting2 from './TwoRoomSetting2';
+import TwoRoomCategory from './TwoRoomCategory';
+import TwoRoomPackage from './TwoRoomPackage';
+import TwoRoomPerson from './TwoRoomPerson';
+import TwoRoomKeep from './TwoRoomKeep';
+import TwoRoomStartAddr from './TwoRoomStartAddr';
+import TwoRoomStartTool from './TwoRoomStartTool';
+import TwoRoomDesinationAddr from './TwoRoomDesinationAddr';
+import TwoRoomDestinationTool from './TwoRoomDestinationTool';
+import TwoRoomDate from './TwoRoomDate';
+import TwoRoomImage from './TwoRoomImage';
+import TwoRoomImageSelect from './TwoRoomImageSelect';
+import TwoRoomEnd from './TwoRoomEnd';
+import CarStartAddr from './CarStartAddr';
+import CarDestinationAddr from './CarDestinationAddr';
+import CarDate from './CarDate';
+import CarImage from './CarImage';
+import CarImageConfirm from './CarImageConfirm';
+import CarAuctionView from './CarAuctionView';
+import ChatingView from './ChatingView';
+import TwoRoomConfirm from '../screen_ex/TwoRoomConfirm';
+import ExpertArea from '../screen_ex/ExpertArea';
+import ExpertAreaInsert from '../screen_ex/ExpertAreaInsert';
+import TwoRoomConfirmDe from './TwoRoomConfirmDe';
+import AIMoveConfirm from './AIMoveConfirm';
+import PayModule from './PayModule';
+import PayView from './PayView';
+import TwoRoomConfirmMy from './TwoRoomConfirmMy';
+import TwoRoomImageChoise from './TwoRoomImageChoise';
+import SmallMoveExpert from '../screen_ex/SmallMoveExpert';
+import ImageView from './ImageView';
+import CarAuctionCheck from './CarAuctionCheck';
+import VisitAuctionPayModule from './VisitAuctionPayModule';
+import TwoRoomImageView from './TwoRoomImageView';
+import TwoRoomImageViewEx from '../screen_ex/TwoRoomImageViewEx';
+import Notice from './Notice';
+import AIMoveImageView from './AIMoveImageView';
+import TwoRoomImageViewMy from './TwoRoomImageViewMy';
+import CarAuctionImageView from './CarAuctionImageView';
+import MyReservation from './MyReservation';
+import MyReservationAi from './MyReservationAi';
+import MyReservationTwoRoom from './MyReservationTwoRoom';
+import MyReservationCar from './MyReservationCar';
 
 
 const Stack = createStackNavigator();
@@ -140,6 +196,62 @@ const Main = (props) => {
                                 <Stack.Screen name="ExpertInfo2" component={ExpertInfo2} />
                                 <Stack.Screen name="ExpertInfo3" component={ExpertInfo3} />
                                 <Stack.Screen name="ExpertLastConfirm" component={ExpertLastConfirm} />
+                                <Stack.Screen name="ExpertAuctionView" component={ExpertAuctionView} />
+                                <Stack.Screen name="ExpertAuction" component={ExpertAuction} />
+                                <Stack.Screen name="ExpertMessageView" component={ExpertMessageView} />
+                                <Stack.Screen name="ExpertProfileSetting" component={ExpertProfileSetting} />
+                                <Stack.Screen name="ServiceQaList" component={ServiceQaList} />
+                                <Stack.Screen name="ServiceQaView" component={ServiceQaView} />
+                                <Stack.Screen name="AppNotice" component={AppNotice} />
+                                <Stack.Screen name="ExpertCerti" component={ExpertCerti} />
+                                <Stack.Screen name="ExpertCard" component={ExpertCard} />
+                                <Stack.Screen name="ExpertCardForm" component={ExpertCardForm} />
+                                <Stack.Screen name="ExpertNotice" component={ExpertNotice} />
+                                <Stack.Screen name="ExpertNoticeView" component={ExpertNoticeView} />
+                                <Stack.Screen name="TwoRoomSetting" component={TwoRoomSetting} />
+                                <Stack.Screen name="TwoRoomSetting2" component={TwoRoomSetting2} />
+                                <Stack.Screen name="TwoRoomCategory" component={TwoRoomCategory} />
+                                <Stack.Screen name="TwoRoomPackage" component={TwoRoomPackage} />
+                                <Stack.Screen name="TwoRoomPerson" component={TwoRoomPerson} />
+                                <Stack.Screen name="TwoRoomKeep" component={TwoRoomKeep} />
+                                <Stack.Screen name="TwoRoomStartAddr" component={TwoRoomStartAddr} />
+                                <Stack.Screen name="TwoRoomStartTool" component={TwoRoomStartTool} />
+                                <Stack.Screen name="TwoRoomDesinationAddr" component={TwoRoomDesinationAddr} />
+                                <Stack.Screen name="TwoRoomDestinationTool" component={TwoRoomDestinationTool} />
+                                <Stack.Screen name="TwoRoomDate" component={TwoRoomDate} />
+                                <Stack.Screen name="TwoRoomImage" component={TwoRoomImage} />
+                                <Stack.Screen name="TwoRoomImageSelect" component={TwoRoomImageSelect} />
+                                <Stack.Screen name="TwoRoomImageChoise" component={TwoRoomImageChoise} />
+                                <Stack.Screen name="TwoRoomEnd" component={TwoRoomEnd} />
+                                <Stack.Screen name="TwoRoomConfirmMy" component={TwoRoomConfirmMy} />
+                                <Stack.Screen name="CarStartAddr" component={CarStartAddr} />
+                                <Stack.Screen name="CarDestinationAddr" component={CarDestinationAddr} />
+                                <Stack.Screen name="CarDate" component={CarDate} />
+                                <Stack.Screen name="CarImage" component={CarImage} />
+                                <Stack.Screen name="CarImageConfirm" component={CarImageConfirm} />
+                                <Stack.Screen name="CarAuctionView" component={CarAuctionView} />
+                                <Stack.Screen name="ChatingView" component={ChatingView} />
+                                <Stack.Screen name="TwoRoomConfirm" component={TwoRoomConfirm} />
+                                <Stack.Screen name="ExpertArea" component={ExpertArea} />
+                                <Stack.Screen name="ExpertAreaInsert" component={ExpertAreaInsert} />
+                                <Stack.Screen name="TwoRoomConfirmDe" component={TwoRoomConfirmDe} />
+                                <Stack.Screen name="AIMoveConfirm" component={AIMoveConfirm} />
+                                <Stack.Screen name="PayModule" component={PayModule} />
+                                <Stack.Screen name="PayView" component={PayView} />
+                                <Stack.Screen name="SmallMoveExpert" component={SmallMoveExpert} />
+                                <Stack.Screen name="ImageView" component={ImageView} />
+                                <Stack.Screen name="CarAuctionCheck" component={CarAuctionCheck} />
+                                <Stack.Screen name="VisitAuctionPayModule" component={VisitAuctionPayModule} />
+                                <Stack.Screen name="TwoRoomImageView" component={TwoRoomImageView} />
+                                <Stack.Screen name="TwoRoomImageViewMy" component={TwoRoomImageViewMy} />
+                                <Stack.Screen name="TwoRoomImageViewEx" component={TwoRoomImageViewEx} />
+                                <Stack.Screen name="Notice" component={Notice} />
+                                <Stack.Screen name="AIMoveImageView" component={AIMoveImageView} />
+                                <Stack.Screen name="CarAuctionImageView" component={CarAuctionImageView} />
+                                <Stack.Screen name="MyReservation" component={MyReservation} />
+                                <Stack.Screen name="MyReservationAi" component={MyReservationAi} />
+                                <Stack.Screen name="MyReservationTwoRoom" component={MyReservationTwoRoom} />
+                                <Stack.Screen name="MyReservationCar" component={MyReservationCar} />
                             </Stack.Navigator>
                         </SafeAreaView>
                     </NavigationContainer>

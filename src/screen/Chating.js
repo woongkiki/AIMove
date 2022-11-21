@@ -4,14 +4,106 @@ import { Box, VStack, HStack } from 'native-base';
 import { DefText } from '../common/BOOTSTRAP';
 import {textLengthOverCut} from '../common/DataFunction';
 import { colorSelect, fsize, fweight } from '../common/StyleCommon';
+import {connect} from 'react-redux';
+import { actionCreators as UserAction } from '../redux/module/action/UserAction';
+import Api from '../Api';
+import { BASE_URL } from '../Utils/APIConstant';
+import { useIsFocused } from '@react-navigation/native';
+import messaging from '@react-native-firebase/messaging';
+import Toast from 'react-native-toast-message';
 
 const {width} = Dimensions.get("window");
 
 const Chating = (props) => {
 
-    const {navigation} = props;
+    const {navigation, userInfo, member_chatCnt} = props;
+
+    const isFocused = useIsFocused();
 
     const [chatCategory, setChatCategory] = useState("메세지");
+
+
+    const [chatList, setChatList] = useState([]);
+    const [pushList, setPushList] = useState([]);
+
+    const chatListApi = () => {
+        Api.send('chat_list', {"id":userInfo.id}, (args)=>{
+
+            let resultItem = args.resultItem;
+            let arrItems = args.arrItems;
+    
+            if(resultItem.result === 'Y' && arrItems) {
+               console.log('채팅리스트리스트 보기: ', arrItems, resultItem);
+               setChatList(arrItems);
+            }else{
+               console.log('채팅리스트 실패!', resultItem);
+               //setExpertList([]);
+            }
+        });
+
+        Api.send('push_list', {"id":userInfo.id, "mtype":"일반"}, (args)=>{
+
+            let resultItem = args.resultItem;
+            let arrItems = args.arrItems;
+    
+            if(resultItem.result === 'Y' && arrItems) {
+               //console.log('푸쉬알림리스트 보기: ', arrItems, resultItem);
+               setPushList(arrItems);
+            }else{
+               console.log('푸쉬알림리스트 실패!', resultItem);
+               //setExpertList([]);
+            }
+        });
+    }
+
+    const chatCntHandler = async () => {
+        const formData = new FormData();
+        formData.append('mid', userInfo.id);
+        formData.append('method', 'member_chatCnt');
+
+        const chat_cnt = await member_chatCnt(formData);
+
+        console.log("chat_cnt Chating Screen::", chat_cnt);
+    }
+
+
+    useEffect(()=> {
+
+        messaging().onMessage((remoteMessage) => {
+
+            if(remoteMessage.data?.intent != ""){
+                Toast.show({
+                    type: 'info', //success | error | info
+                    position: 'top',
+                    text1: remoteMessage.notification.title,
+                    text2: remoteMessage.notification.body,
+                    visibilityTime: 3000,
+                   // autoHide: remoteMessage.data.intent === 'SellerReg' ? false : true,    // true | false
+                    topOffset: Platform.OS === 'ios' ? 66 + getStatusBarHeight() : 10,
+                    style: { backgroundColor: 'red' },
+                    bottomOffset: 100,
+                    onShow: () => {},
+                    onHide: () => {},
+                    onPress: () => {
+      
+                      //console.log('12312312313::::', remoteMessage.data)
+                      if (remoteMessage.data?.intent != null && remoteMessage.data?.intent != '') {
+                 
+                      }
+                    },
+                  });
+            }
+            
+          
+            console.log('실행중 메시지 Chating Screen:::',remoteMessage);
+            chatListApi();
+          });
+
+        if(isFocused){
+            chatListApi();
+            chatCntHandler(); // 채팅 카운트
+        }
+    }, [isFocused])
 
     return (
         <Box flex={1} backgroundColor='#fff'>
@@ -31,46 +123,107 @@ const Chating = (props) => {
                 {
                     chatCategory == "메세지" && 
                     <Box>
-                        <TouchableOpacity>
-                            <Box px='25px' py='15px' borderBottomWidth={1} borderBottomColor="#F3F4F5">
-                                <HStack alignItems={'center'} justifyContent='space-between'>
-                                    <Image 
-                                        source={require('../images/expertEx2.png')}
-                                        alt='홍길동'
-                                        style={[
+                        {
+                            chatList != "" ?
+                            chatList.map((item, index) => {
+                                return(
+                                    <TouchableOpacity key={index} onPress={()=>navigation.navigate("ChatingView", {"idx":item.idx, "aidx":item.auction_idx, "atype":item.auction_type, "chatName":item.ex_name, "chatPhone":item.ex_phone})}>
+                                        <Box px='25px' py='15px' borderBottomWidth={1} borderBottomColor="#F3F4F5">
+                                            <HStack alignItems={'center'} justifyContent='space-between'>
+                                                {
+                                                    item.exprofileUrl != "" ?
+                                                    <Box width='60px' height={'60px'} borderRadius='10px' overflow={'hidden'}>
+                                                        <Image 
+                                                            source={{uri:BASE_URL + "/data/file/expert/" + item.exprofileUrl}}
+                                                            alt='홍길동'
+                                                            style={[
+                                                                {
+                                                                    width: 60,
+                                                                    height: 60,
+                                                                    resizeMode:'stretch'
+                                                                }
+                                                            ]}
+                                                        />
+                                                    </Box>
+                                                    :
+                                                    <Box width='60px' height={'60px'} borderRadius='10px' overflow={'hidden'}>
+                                                        <Image 
+                                                            source={{uri:BASE_URL + "/images/appLogo.png"}}
+                                                            alt={userInfo?.ex_name}
+                                                            style={[
+                                                                {
+                                                                    width: 60,
+                                                                    height: 60,
+                                                                    resizeMode:'stretch'
+                                                                }
+                                                            ]}
+                                                        />
+                                                    </Box>
+                                                }
+                                                
+                                                <Box width={(width - 50) - 80}>
+                                                    {
+                                                        item.auction_type == "시스템 메시지" ?
+                                                        <HStack mb='10px'>
+                                                            <DefText text={"내집이사 고객만족센터"} style={[styles.chatPerson]} />
+                                                        </HStack>
+                                                        :
+                                                        <HStack mb='10px'>
+                                                            <DefText text={item.ex_name} style={[styles.chatPerson]}/>
+                                                            <DefText text=" 전문가" style={[styles.chatPerson, {color:'#979797'}]} />
+                                                        </HStack>
+                                                    }
+                                                    {
+                                                        item.one != "" &&
+                                                        <DefText text={textLengthOverCut(item.one, 18, '...')} style={[styles.chatInfo]} />
+                                                    }
+
+                                                    <Box position={'absolute'} top='0' right='0'>
+                                                        <DefText text={item.date.substring(0,10)} style={[styles.chatdate]} />
+                                                    </Box>
+                                                </Box>
+                                                
+                                            </HStack>
                                             {
-                                                width: 60,
-                                                height: 60,
-                                                borderRadius: 10,
-                                                resizeMode:'contain'
+                                                item.chat_cnt != "0" &&
+                                                <Box position={'absolute'} bottom='15px' right='25px' width='25px' height='25px' borderRadius={'20px'} backgroundColor='#f00' justifyContent={'center'} alignItems='center'>
+                                                    <DefText text={item.chat_cnt} style={[fsize.fs12, {color:'#fff'}]} />
+                                                </Box>
                                             }
-                                        ]}
-                                    />
-                                    <Box width={(width - 50) - 80}>
-                                        <HStack mb='10px'>
-                                            <DefText text="홍길동" style={[styles.chatPerson]}/>
-                                            <DefText text=" 전문가" style={[styles.chatPerson, {color:'#979797'}]} />
-                                        </HStack>
-                                        <DefText text={textLengthOverCut("안녕하세요...이사 업체인데요 언제쯤 이사", 15, '...')} style={[styles.chatInfo]} />
-                                        <Box position={'absolute'} top='0' right='0'>
-                                            <DefText text="22.06.30" style={[styles.chatdate]} />
                                         </Box>
-                                    </Box>
-                                </HStack>
+                                    </TouchableOpacity>
+                                )
+                            })
+                            :
+                            <Box alignItems={'center'} justifyContent='center' py='40px'>
+                                <DefText text="채팅내역이 없습니다." />
                             </Box>
-                        </TouchableOpacity>
+                        }
+                        
                     </Box>
                 }
                 {
                     chatCategory == "알림" &&
-                    <Box px='25px' py='20px'>
-                        <Box style={[styles.pushBox]}>
-                            <DefText text="[앱 푸시 메세지]" style={[styles.pushTitle]} />
-                            <DefText text="2022.06.01에 요청한 역경매 시간이 30분 남았어요!" style={[styles.pushContent]} />
-                            <HStack justifyContent={'flex-end'} mt='20px'>
-                                <DefText text="2022.06.01" style={[styles.pushDate]} />
-                            </HStack>
-                        </Box>
+                    <Box px='25px' pb='20px'>
+                        {
+                            pushList != "" ?
+                            pushList.map((item, index) => {
+                                return(
+                                    <Box style={[styles.pushBox]} key={index} mt='20px'>
+                                        <DefText text={"["+ item.push_type +"]"} style={[styles.pushTitle]} />
+                                        <DefText text={item.p_title} style={[styles.pushContent]} />
+                                        <HStack justifyContent={'flex-end'} mt='20px'>
+                                            <DefText text={item.p_datetime.substring(0, 10)} style={[styles.pushDate]} />
+                                        </HStack>
+                                    </Box>
+                                )
+                            })
+                            :
+                            <Box py='40px' alignItems={'center'} justifyContent='center'>
+                                <DefText text="푸쉬 메세지 내역이 없습니다." />
+                            </Box>
+                        }
+                        
                     </Box> 
                 }
             </ScrollView>
@@ -123,4 +276,13 @@ const styles = StyleSheet.create({
     }
 })
 
-export default Chating;
+export default connect(
+    ({ User }) => ({
+        userInfo: User.userInfo, //회원정보
+    }),
+    (dispatch) => ({
+        member_login: (user) => dispatch(UserAction.member_login(user)), //로그인
+        member_info: (user) => dispatch(UserAction.member_info(user)), //회원 정보 조회
+        member_chatCnt: (user) => dispatch(UserAction.member_chatCnt(user))
+    })
+)(Chating);
