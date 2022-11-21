@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import { TouchableOpacity, Image, StyleSheet, Platform, Dimensions, ScrollView, Button } from 'react-native';
+import { TouchableOpacity, Image, StyleSheet, Platform, Dimensions, ScrollView, Button, Keyboard } from 'react-native';
 import { Box, VStack, HStack, Modal } from 'native-base';
 import { DefText, DefInput, DefButton } from '../common/BOOTSTRAP';
 import { colorSelect, fsize, fweight } from '../common/StyleCommon';
@@ -20,23 +20,24 @@ import {
     statusCodes,
 } from "@react-native-google-signin/google-signin";
 import { NaverLogin, getProfile as getNaverProfile } from "@react-native-seoul/naver-login";
-import { AppleButton } from '@invertase/react-native-apple-authentication';
+import { appleAuth, AppleButton } from '@invertase/react-native-apple-authentication';
 import {connect} from 'react-redux';
 import { actionCreators as UserAction } from '../redux/module/action/UserAction';
+import Api from '../Api';
 
 const {width, height} = Dimensions.get("window");
 
 //네이버로그인키
 const iosKeys = {
-    kConsumerKey: "4YKmeUz6rczTSC5dvctZ",
-    kConsumerSecret: "uWza0TRPQn",
+    kConsumerKey: "biqlZAxYxqgNH7_QoYOb",
+    kConsumerSecret: "vM11S1DiU6",
     kServiceAppName: "내집이사",
-    kServiceAppUrlScheme: "naverLogin" // only for iOS
+    kServiceAppUrlScheme: "aimoveNaverLogin" // only for iOS
 }
 
 const androidKeys = {
-    kConsumerKey: "4YKmeUz6rczTSC5dvctZ",
-    kConsumerSecret: "uWza0TRPQn",
+    kConsumerKey: "biqlZAxYxqgNH7_QoYOb",
+    kConsumerSecret: "vM11S1DiU6",
     kServiceAppName: "내집이사"
 };
 
@@ -45,6 +46,12 @@ const initials = Platform.OS === "ios" ? iosKeys : androidKeys;
 let t1;
 let tcounter;
 let temp;
+
+
+//애플로그인
+let user = null;
+
+
 
 const LoginMember = (props) => {
 
@@ -62,12 +69,49 @@ const LoginMember = (props) => {
     //이사전문가용
     const [expertName, setExpertName] = useState("");
 
+
+		//애플로그인용
+		const [credentialStateForUser, updateCredentialStateForUser] = useState(-1);
+
+		// useEffect(() => {
+		// 	if (!appleAuth.isSupported){
+                
+        //     };
+	
+		// 	fetchAndUpdateCredentialState(updateCredentialStateForUser).catch(error =>
+		// 		updateCredentialStateForUser(`Error: ${error.code}`),
+		// 	);
+		// }, []);
+
+		// useEffect(() => {
+		// 	if (!appleAuth.isSupported){
+
+        //     };
+	
+		// 	return appleAuth.onCredentialRevoked(async () => {
+		// 		console.warn('Credential Revoked');
+		// 		fetchAndUpdateCredentialState(updateCredentialStateForUser).catch(error =>
+		// 			updateCredentialStateForUser(`Error: ${error.code}`),
+		// 		);
+		// 	});
+		// }, []);
+
+		// if (!appleAuth.isSupported) {
+		// 	return (
+		// 		<Box style={[styles.container, styles.horizontal]}>
+		// 			<DefText text={"Apple Authentication is not supported on this device."} />
+		// 		</Box>
+		// 	);
+		// }
+
+		//애플로그인용
+
     const expertNameChange = (text) => {
         setExpertName(text);
     }
 
     const timer_start = () => {
-        tcounter = 30;
+        tcounter = 180;
         t1 = setInterval(Timer, 1000);
         //Timer();
     }
@@ -90,8 +134,8 @@ const LoginMember = (props) => {
 
         temp = temp + (tcounter % 60);
 
-        console.log("temp:::", temp);
-        console.log("tcounter::", tcounter % 60);
+        //console.log("temp:::", temp);
+        //console.log("tcounter::", tcounter % 60);
         setTimeStamp(temp);
 
         if (tcounter <= 0) {
@@ -115,12 +159,34 @@ const LoginMember = (props) => {
         else                {timer_start()}
     },[phoneInterval]);
 
+
+    const [randNumber, setRandNumber] = useState("");
+
     const sendCertiNumber = () => {
-        setPhoneInterval(true)
+        ToastMessage("인증번호가 발송되었습니다.");
+
+        Api.send('login_sms', {"phoneNumber":phoneNumber}, (args)=>{
+
+            let resultItem = args.resultItem;
+            let arrItems = args.arrItems;
+    
+            if(resultItem.result === 'Y' && arrItems) {
+               console.log('인증번호 발송 성공: ', resultItem, arrItems);
+               //setPushList(arrItems);
+               setRandNumber(arrItems);
+               Keyboard.dismiss();
+               setPhoneInterval(true)
+
+            }else{
+               console.log('인증번호 발송 실패!', resultItem);
+               
+            }
+        });
+        
     }
     
 
-    //인증하기
+    //인증후 로그인
     const certiNumberCheck = async () => {
         if(!phoneInterval){
             ToastMessage("인증시간이 만료되었습니다\n인증번호를 다시 발송하세요.");
@@ -131,7 +197,7 @@ const LoginMember = (props) => {
             return false;
         }
 
-        if(certiNumber != "111111"){
+        if(certiNumber != randNumber){
             ToastMessage("인증번호가 일치하지 않습니다.");
             return false;
         }
@@ -142,17 +208,22 @@ const LoginMember = (props) => {
         //     screen: 'Home',
         // });
 
+        const token = await messaging().getToken();
 
         const formData = new FormData();
         formData.append("phone", phoneNumber);
-        formData.append("method", "member_login");
+        formData.append("app_token", token);
+        formData.append("method", "login_action");
 
         const login = await member_login(formData);
-
+        console.log("login",login)
         if(login.state){
-            const info = await member_info(formData);
+
+            console.log("login", login);
+            //const info = await member_info(formData);
             //console.log("info::::", info);
-            ToastMessage(info.msg);
+            console.log(login.msg);
+            ToastMessage(login.msg);
             navigation.replace("TabNav", {
                 screen: "Home"
             })
@@ -179,19 +250,23 @@ const LoginMember = (props) => {
             const token = await login();
             if(token.scopes != undefined){
                 const profile = await getKakaoProfile();
+
+
+				console.log("카카오톡 profile", profile);
     
                 const params = {
                     snskey: profile.id,
                     email: profile.email,
-                    sns: 'kakao'
+                    sns: 'kakao',
+					sns_id: 'kakao_' + profile.id
                 }
     
-                //console.log('params::::', params);
-                snsLoginHandler(params);
+                // //console.log('params::::', params);
+                 snsLoginHandler(params);
             }
         } catch(error){
-           // console.log('카카오 로그인 실패 error', error);
-            ToastMessage("로그인을 취소하셨습니다.")
+            console.log('카카오 로그인 실패 error', error);
+            ToastMessage("로그인을 취소하셨습니다.");
         }
     }
 
@@ -208,13 +283,15 @@ const LoginMember = (props) => {
                 authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
             const params = {
-                snskey: userInfo.user.id,
+                snskey: userInfo.idToken,
                 email: userInfo.user.email,
-                sns: 'google'
+                sns: 'google',
+				sns_id: 'google_' + userInfo.user.id
             }
 
-            //console.log('구글 로그인 params:::', params);
+            // //console.log('구글 로그인 params:::', params);
             snsLoginHandler(params);
+						//console.log("userInfo_google", userInfo);
 
         }catch(error){
             console.log('구글로그인 오류::::', error);
@@ -256,41 +333,117 @@ const LoginMember = (props) => {
             ToastMessage("로그인이 실패하였습니다.");
             return false;
         }
-        console.log("profileResult::::", profileResult.response.id);
+        console.log("profileResult::::", profileResult);
 
         
         const params = {
             snskey: profileResult.response.id,
             email: profileResult.response.email,
-            sns: 'naver'
+            sns: 'naver',
+			sns_id: 'naver_' + profileResult.response.id
         }
-        //console.log("params",params);
-        snsLoginHandler(params);
+        // //console.log("params",params);
+         snsLoginHandler(params);
 
     }
 
 
-    const onAppleButtonPress = async () => {
-        console.log("애플로그인...")
+    //애플로그인
+
+    const fetchAndUpdateCredentialState = async (updateCredentialStateForUser) => {
+        if (user === null) {
+                updateCredentialStateForUser('N/A');
+        } else {
+            const credentialState = await appleAuth.getCredentialStateForUser(user);
+            if (credentialState === appleAuth.State.AUTHORIZED) {
+            updateCredentialStateForUser('AUTHORIZED');
+            } else {
+            updateCredentialStateForUser(credentialState);
+            }
+        }
     }
+	
+	const onAppleButtonPress = async (updateCredentialStateForUser) => {
+		console.warn('Beginning Apple Authentication');
+	
+		// start a login request
+		try {
+            const appleAuthRequestResponse = await appleAuth.performRequest({
+            requestedOperation: appleAuth.Operation.LOGIN,
+            requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+            });
+
+            console.log('appleAuthRequestResponse', appleAuthRequestResponse);
+
+            const {
+            user: newUser,
+            email,
+            nonce,
+            identityToken,
+            realUserStatus /* etc */,
+            } = appleAuthRequestResponse;
+
+            user = newUser;
+
+            fetchAndUpdateCredentialState(updateCredentialStateForUser).catch(error =>
+            updateCredentialStateForUser(`Error: ${error.code}`),
+            );
+
+            if (identityToken) {
+            // e.g. sign in with Firebase Auth using `nonce` & `identityToken`
+            console.log(nonce, identityToken);
+            } else {
+            // no token - failed sign-in?
+            }
+
+            if (realUserStatus === appleAuth.UserStatus.LIKELY_REAL) {
+            console.log("I'm a real person!");
+            }
+
+        //	console.warn(`Apple Authentication Completed, ${user}, ${email}`, identityToken);
+
+            const params = {
+                snskey: identityToken,
+                email: email,
+                sns: 'apple',
+                sns_id: 'apple_' + newUser
+            }
+
+            console.log("params", params);
+
+            snsLoginHandler(params);
+	
+		} catch (error) {
+            if (error.code === appleAuth.Error.CANCELED) {
+                console.warn('User canceled Apple Sign in.');
+                ToastMessage("애플로그인을 취소하셨습니다.");
+            } else {
+                console.error("error", error);
+            }
+		}
+	}
+		//애플로그인
 
 
     const snsLoginHandler = async (argData) => {
        
+        const token = await messaging().getToken();
 
         const formData = new FormData();
         formData.append("email", argData.email);
+		formData.append("sns_id", argData.sns_id);
         formData.append("sns", argData.sns);
         formData.append("snskey", argData.snskey);
-        formData.append("method", "member_login");
+        formData.append("appToken", token);
+        formData.append("method", "login_sns");
 
         const login = await member_login(formData);
 
        
         if(login.state){
-            const info = await member_info(formData);
-            console.log("sns 로그인 info:::::", info);
-            ToastMessage(info.msg);
+            // const info = await member_info(formData);
+            console.log("sns 로그인 info:::::", login);
+            ToastMessage(login.msg);
             navigation.replace("TabNav", {
                 screen: "Home"
             })
@@ -302,7 +455,7 @@ const LoginMember = (props) => {
 
     useEffect(()=> {
         GoogleSignin.configure({
-            webClientId: "1010442184943-4qcbsdj1tguc471qr8semci8r6t4opr1.apps.googleusercontent.com",
+            webClientId: "158098987800-fu4kffnmmu6uhliv9rbd24jkid6ojgbn.apps.googleusercontent.com",
             offlineAccess: true,
             hostedDomain: "",
             forceConsentPrompt: true,
@@ -425,7 +578,7 @@ const LoginMember = (props) => {
                             width: width - 50, // You must specify a width
                             height: 44, // You must specify a height
                             }}
-                            onPress={() => onAppleButtonPress()}
+                            onPress={() => onAppleButtonPress(updateCredentialStateForUser)}
                         />
                     </Box>
                 }
@@ -476,9 +629,20 @@ const styles = StyleSheet.create({
         justifyContent:'center'
     },
     kakaoLoginButtonText: {
-        ...fsize.fs15,
+        ...fsize.fs14,
         ...fweight.m
-    }
+    },
+		container: {
+			flex: 1,
+			justifyContent: 'center',
+			backgroundColor: 'pink',
+		},
+		horizontal: {
+			flexDirection: 'column',
+			justifyContent: 'center',
+			alignItems: 'center',
+			padding: 10,
+		},
 })
 
 export default connect(

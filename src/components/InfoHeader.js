@@ -21,6 +21,7 @@ const InfoHeader = (props) => {
 
     return (
         <Box position={'absolute'} width={width} height="55px" top='0' left='0' px='25px' justifyContent={'center'} backgroundColor={headBg} zIndex='99'>
+            <HStack>
             <TouchableOpacity onPress={()=>navigation.goBack()}>
                 <Image
                     source={require("../images/expertViewBackIcon.png")}
@@ -31,6 +32,7 @@ const InfoHeader = (props) => {
                     }}
                 />
             </TouchableOpacity>
+            </HStack>
         </Box>
     );
 };

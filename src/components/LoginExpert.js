@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import { TouchableOpacity, Image, StyleSheet, Platform, Dimensions, ScrollView, Button } from 'react-native';
+import { TouchableOpacity, Image, StyleSheet, Platform, Dimensions, ScrollView, Button, Keyboard } from 'react-native';
 import { Box, VStack, HStack, Modal } from 'native-base';
 import { DefText, DefInput, DefButton } from '../common/BOOTSTRAP';
 import { colorSelect, fsize, fweight } from '../common/StyleCommon';
@@ -28,7 +28,7 @@ const LoginExpert = (props) => {
     const [phoneInterval, setPhoneInterval] = useState(false);
 
     const timer_start = () => {
-        tcounter = 30;
+        tcounter = 180;
         t1 = setInterval(Timer, 1000);
         //Timer();
     }
@@ -71,9 +71,30 @@ const LoginExpert = (props) => {
        
     };
  
+    const [randNumber, setRandNumber] = useState("");
 
     const sendCertiNumber = () => {
-        setPhoneInterval(true)
+        ToastMessage("인증번호가 발송되었습니다.");
+
+        Api.send('login_sms', {"phoneNumber":phoneNumber}, (args)=>{
+
+            let resultItem = args.resultItem;
+            let arrItems = args.arrItems;
+    
+            if(resultItem.result === 'Y' && arrItems) {
+               console.log('인증번호 발송 성공: ', resultItem, arrItems);
+               //setPushList(arrItems);
+               setRandNumber(arrItems);
+               Keyboard.dismiss();
+               setPhoneInterval(true)
+
+            }else{
+               console.log('인증번호 발송 실패!', resultItem);
+               
+            }
+        });
+        //Keyboard.dismiss();
+        //setPhoneInterval(true)
     }
 
     //휴대폰번호 입력
@@ -106,12 +127,30 @@ const LoginExpert = (props) => {
 
     const loginHandler = async () => {
 
+        if(!phoneInterval){
+            ToastMessage("인증시간이 만료되었습니다\n인증번호를 다시 발송하세요.");
+            return false;
+        }
+        if(!certiNumber){
+            ToastMessage("인증번호를 입력하세요.");
+            return false;
+        }
+
+        if(certiNumber != randNumber){
+            ToastMessage("인증번호가 일치하지 않습니다.");
+            return false;
+        }
+
+        ToastMessage("휴대폰 번호 인증이 완료되었습니다.");
+
         setPhoneInterval(false);
 
+        const token = await messaging().getToken();
 
         const formData = new FormData();
         formData.append("ex_name", expertName);
         formData.append("phone", phoneNumber);
+        formData.append("app_token", token);
         formData.append("method", "expert_login");
 
         const login = await member_login(formData);
@@ -120,10 +159,14 @@ const LoginExpert = (props) => {
             //const info = await member_info(formData);
             console.log("login::::", login);
             if(login.result.register_status == "Y"){
-                navigation.replace("ExpertStart");
+                navigation.replace("ExpertStart", {"name":expertName});
             }else{
                 navigation.replace("ExpertNavi", {
-                    screen: "PlayMove"
+                    screen: "PlayMove",
+                    params:{
+                        moveCate : "소형 이사" ,
+                        homeCate: "",
+                    }
                 })
             }
             ToastMessage(login.msg);
