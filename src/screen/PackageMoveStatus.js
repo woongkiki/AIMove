@@ -15,7 +15,7 @@ const PackageMoveStatus = (props) => {
     const {navigation, route} = props;
     const {params} = route;
 
-    console.log("params", params);
+    console.log("params1", params);
     const [pakageType, setPakageType] = useState("");
 
     const pakageChange = (type) => {
@@ -24,7 +24,7 @@ const PackageMoveStatus = (props) => {
 
     const nextNavigation = () => {
         console.log("다음");
-        navigation.navigate("SmallMovePerson", {"item":params.item, "moveCategory":params.moveCategory, "pakageType":pakageType})
+        navigation.navigate("SmallMovePerson", {"bidx":params.bidx, "moveCategory":params.moveCategory, "pakageType":pakageType})
     }
 
     return (

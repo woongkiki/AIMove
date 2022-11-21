@@ -1,22 +1,116 @@
 import React, {useState, useEffect} from 'react';
-import { TouchableOpacity, StyleSheet, Dimensions, Image, ScrollView } from 'react-native';
+import { TouchableOpacity, StyleSheet, Dimensions, Image, ScrollView, ActivityIndicator, LogBox } from 'react-native';
 import { Box, VStack, HStack } from 'native-base';
 import { DefButton, DefText } from '../common/BOOTSTRAP';
-import { fsize, fweight } from '../common/StyleCommon';
+import { colorSelect, fsize, fweight } from '../common/StyleCommon';
 import { numberFormat } from '../common/DataFunction';
+import {connect} from 'react-redux';
+import { actionCreators as UserAction } from '../redux/module/action/UserAction';
+import Api from '../Api';
+import CountDown from '@ilterugur/react-native-countdown-component';
+import { useIsFocused } from '@react-navigation/native';
+import Twoauction from '../components/Twoauction';
+import AIauction from '../components/AIauction';
+import Carauction from '../components/Carauction';
+import CarAuctionEnd from '../components/CarAuctionEnd';
+import TwoauctionImage from '../components/TwoauctionImage';
+import TwoauctionImageEnd from '../components/TwoauctionImageEnd';
+import TwoauctionEnd from '../components/TwoauctionEnd';
+import AIauctionEnd from '../components/AIauctionEnd';
+
+LogBox.ignoreAllLogs();
 
 const {width, height} = Dimensions.get("window");
 
 const Reservation = (props) => {
 
-    const {navigation} = props;
+    const {navigation, userInfo, route, member_chatCnt} = props;
+    const {params} = route;
+    const isFocused = useIsFocused();
 
+    const [loading, setLoading] = useState(true);
+    const [auctionList, setAuctionList] = useState("");
+    const [expertList, setExpertList] = useState([]);
     const [tabCategory, setTabCategory] = useState("찾는중");
     const [expertCategory, setExpertCategory] = useState("가격적당");
+    const [moveCate, setMoveCate] = useState("소형 이사");
+    const [twoCate, setTwoCate] = useState("사진");
+
+
+    const chatCntHandler = async () => {
+        const formData = new FormData();
+        formData.append('mid', userInfo.id);
+        formData.append('method', 'member_chatCnt');
+
+        const chat_cnt = await member_chatCnt(formData);
+
+        console.log("chat_cnt Reservation Screen::", chat_cnt);
+    }
+
+
+    const reservationApi = async () => {
+        await setLoading(true);
+        await Api.send('auction_myList', {'id':userInfo.id}, (args)=>{
+
+            let resultItem = args.resultItem;
+            let arrItems = args.arrItems;
+    
+            if(resultItem.result === 'Y' && arrItems) {
+               console.log('역경매 리스트 보기: ', resultItem);
+               setAuctionList(arrItems);
+            }else{
+               console.log('역경매 리스트 실패!', resultItem);
+               setAuctionList("");
+            }
+        });
+        await Api.send('auction_expertList', {'id':userInfo.id, 'ai_idx':auctionList.idx}, (args)=>{
+
+            let resultItem = args.resultItem;
+            let arrItems = args.arrItems;
+    
+            if(resultItem.result === 'Y' && arrItems) {
+               //console.log('역경매 참여한 전문가 보기: ', resultItem, arrItems);
+               //setAuctionList(arrItems);
+               setExpertList(arrItems);
+            }else{
+               console.log('역경매 참여한 전문가 실패!', resultItem);
+               
+            }
+        });
+        await setLoading(false);
+    }
+
+    
+
+    useEffect(()=>{
+        if(isFocused){
+            reservationApi();
+            chatCntHandler(); //채팅 카운트..
+        }
+
+        if(params.moveCate != ""){
+            setMoveCate(params.moveCate);
+        }
+
+        if(params.tabCategory != ""){
+            setTabCategory(params.tabCategory)
+        }
+
+        if(params.twoCate != ""){
+            setTwoCate(params.twoCate)
+        }
+
+    }, [isFocused])
 
     return (
         <Box flex={1} backgroundColor='#fff'>
-            <ScrollView>
+            {
+                loading ?
+                <Box flex={1} alignItems='center' justifyContent='center'>
+                    <ActivityIndicator size='large' color='#333' />
+                </Box>
+                :
+                <ScrollView>
                 <HStack>
                     <TouchableOpacity onPress={()=>setTabCategory("찾는중")} style={[styles.tabButton]}>
                         <DefText text="전문가 찾는중" style={[styles.tabButtonText, tabCategory == "찾는중" && [{color:'#000'}, fweight.b]]} />
@@ -27,281 +121,68 @@ const Reservation = (props) => {
                         <Box width={width/2} height={ tabCategory == '완료' ? '3px' : '1px'} backgroundColor={ tabCategory == '완료' ? '#0195FF' : '#CDCDCD'} position='absolute' bottom='0'/>
                     </TouchableOpacity>
                 </HStack>
-                
-               
-                {/* 전문가 컴포넌트 */}
+                <HStack>
+                    <TouchableOpacity onPress={()=>setMoveCate("소형 이사")} style={[styles.tabButton, {width:width * 0.33}]}>
+                        <DefText text="소형 이사" style={[styles.tabButtonText, moveCate == "소형 이사" && [{color:'#000'}, fweight.b]]} />
+                        <Box width={width * 0.33} height={ moveCate == '소형 이사' ? '3px' : '1px'} backgroundColor={ moveCate == '소형 이사' ? '#0195FF' : '#CDCDCD'} position='absolute' bottom='0' />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={()=>setMoveCate("가정집 이사")} style={[styles.tabButton, {width:width * 0.33},]}>
+                        <DefText text="가정집 이사" style={[styles.tabButtonText, moveCate == "가정집 이사" && [{color:'#000'}, fweight.b]]}  />
+                        <Box width={width * 0.33} height={ moveCate == '가정집 이사' ? '3px' : '1px'} backgroundColor={ moveCate == '가정집 이사' ? '#0195FF' : '#CDCDCD'} position='absolute' bottom='0' />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={()=>setMoveCate("차량제공")} style={[styles.tabButton, {width:width * 0.33}]}>
+                        <DefText text="차량제공" style={[styles.tabButtonText, moveCate == "차량제공" && [{color:'#000'}, fweight.b]]}  />
+                        <Box width={width * 0.33} height={ moveCate == '차량제공' ? '3px' : '1px'} backgroundColor={ moveCate == '차량제공' ? '#0195FF' : '#CDCDCD'} position='absolute' bottom='0' />
+                    </TouchableOpacity>
+                </HStack>
                 {
-                    tabCategory == "찾는중" &&
-                    <>
-                        <Box p='25px'>
-                            <HStack style={[styles.priceBox]}>
-                                <DefText text="AI 이사 견적" style={[styles.priceLeftText]} />
-                                <DefText text="20 ~ 30만원" style={[styles.priceRightText]} />
-                            </HStack>
-                            <HStack style={[styles.priceBox, {borderColor:'#D6D6D6', marginTop:15}]}>
-                                <DefText text="전문가 찾는 시간" style={[styles.priceLeftText]} />
-                                <DefText text="23:54:55" style={[styles.priceRightText, fweight.r, {color:'#000'}]} />
-                            </HStack>
-                        </Box>
-                        <Box p='25px' borderTopWidth={7} borderTopColor='#F3F4F5'>
-                            <HStack>
-                                <TouchableOpacity onPress={()=>setExpertCategory("가격적당")} style={[styles.expertCateBtn]}>
-                                    <DefText text="가격적당" style={[styles.expertCateBtnText, expertCategory == '가격적당' && [{color:'#0195ff'}, fweight.b]]} />
-                                    {
-                                        expertCategory == '가격적당' &&
-                                        <Box width={'16px'} height='2px' backgroundColor={'#0195ff'} position='absolute' bottom='0' left="50%" marginLeft='-8px' />
-                                    }   
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={()=>setExpertCategory("서비스 좋은순")}  style={[styles.expertCateBtn]}>
-                                    <DefText text="서비스 좋은순" style={[styles.expertCateBtnText, expertCategory == '서비스 좋은순' && [{color:'#0195ff'}, fweight.b]]} />
-                                    {
-                                        expertCategory == '서비스 좋은순' &&
-                                        <Box width={'16px'} height='2px' backgroundColor={'#0195ff'} position='absolute' bottom='0' left="50%" marginLeft='-8px' />
-                                    }  
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={()=>setExpertCategory("경매입찰순")}  style={[styles.expertCateBtn]}>
-                                    <DefText text="경매입찰순" style={[styles.expertCateBtnText, expertCategory == '경매입찰순' && [{color:'#0195ff'}, fweight.b]]} />
-                                    {
-                                        expertCategory == '경매입찰순' &&
-                                        <Box width={'16px'} height='2px' backgroundColor={'#0195ff'} position='absolute' bottom='0' left="50%" marginLeft='-8px' />
-                                    }  
-                                </TouchableOpacity>
-                            </HStack>
-                            <Box>
-                                <HStack justifyContent={'space-between'} mt='30px'>
-                                    <Box>
-                                        <HStack alignItems={'flex-end'}>
-                                            <DefText text="홍길동" style={[fsize.fs15, fweight.b, {marginRight:5}]} />
-                                            <DefText text="이사전문가" style={[fsize.fs13, fweight.b, {color:'#979797'}]} />
-                                        </HStack>
-                                        <DefText text="내집처럼 이사해드리겠습니다." style={[fsize.fs12, {marginVertical:10}]} />
-                                        <DefText text="이사서비스" style={[fsize.fs13, {color:'#6C6C6C'}]} />
-                                        <HStack mt='10px'>
-                                            <Image
-                                                source={require('../images/starIcon.png')}
-                                                alt='별점'
-                                                style={[
-                                                    {
-                                                        width: (width - 50) * 0.04,
-                                                        height: (width - 50) * 0.038,
-                                                        resizeMode:'contain'
-                                                    }
-                                                ]}
-                                            />
-                                            <DefText text='4.0' style={[fsize.fs12, fweight.b, {color:'#6C6C6C', marginLeft:5}]} />
-                                        </HStack>
-                                    </Box>
-                                    <Box>
-                                        <Image 
-                                            source={require('../images/expertEx2.png')}
-                                            alt='홍길동'
-                                            style={[
-                                                {
-                                                    width: (width - 50) * 0.26,
-                                                    height: (width - 50) * 0.26,
-                                                    borderRadius: 10,
-                                                    resizeMode:'contain'
-                                                }
-                                            ]}
-                                        />
-                                    </Box>
-                                </HStack>
-                                <HStack mt='20px' pb='20px'>
-                                    <HStack alignItems={'center'} mr='10px'> 
-                                        <Image 
-                                            source={require("../images/certiCheckIcon.png")}
-                                            style={{
-                                                width:16,
-                                                height:16,
-                                                resizeMode:'contain'
-                                            }}
-                                        />
-                                        <DefText text="본인인증완료" style={[styles.checkIcons, {color:'#65D97C'}]} />
-                                    </HStack>
-                                    <HStack alignItems={'center'}>
-                                        <Image 
-                                            source={require("../images/companyCheckIcon.png")}
-                                            style={{
-                                                width:16,
-                                                height:16,
-                                                resizeMode:'contain'
-                                            }}
-                                        />
-                                        <DefText text="사업자인증완료" style={[styles.checkIcons, {color:'#0E57FF'}]} />
-                                    </HStack>
-                                </HStack>
-                                <Box py='20px' borderTopWidth={2} borderBottomWidth={2} borderTopColor='#F3F4F5' borderBottomColor={'#F3F4F5'}>
-                                    <HStack justifyContent={'space-between'} alignItems='center'>
-                                        <DefText text='반포장이사 / 일반이사 전문' style={[styles.certiLabel]} />
-                                        <HStack alignItems={'center'}>
-                                            <DefText text='이사 건수 ' style={[styles.certiSmall]} />
-                                            <DefText text='38' style={[styles.certiLabel, {borderBottomWidth:1}]}/>
-                                            <DefText text=' 건' style={[styles.certiSmall]} />
-                                        </HStack>
-                                    </HStack>
-                                    <HStack justifyContent={'space-between'} alignItems='center' mt='15px' >
-                                        <DefText text='경력 7년' style={[styles.certiLabel]} />
-                                        <HStack alignItems={'center'}>
-                                            <DefText text='후기 ' style={[styles.certiSmall]} />
-                                            <DefText text='38' style={[styles.certiLabel, {borderBottomWidth:1}]}/>
-                                            <DefText text=' 개' style={[styles.certiSmall]} />
-                                        </HStack>
-                                    </HStack>
-                                </Box>
-                                <Box py='20px' borderBottomWidth={2}  borderBottomColor={'#F3F4F5'}>
-                                    <HStack justifyContent={'space-between'} alignItems='center'>
-                                        <DefText text='차량' style={[styles.certiLabel]} />
-                                        <DefText text='1톤 1대 ' style={[styles.certiSmall]} />
-                                    </HStack>
-                                    <HStack justifyContent={'space-between'} alignItems='center' mt='15px' >
-                                        <DefText text='참여 인력' style={[styles.certiLabel]} />
-                                        <DefText text='남성 2명 / 여성 2명' style={[styles.certiSmall]} />
-                                    </HStack>
-                                </Box>
-                                <Box py='20px' borderBottomWidth={2}  borderBottomColor={'#F3F4F5'}>
-                                    <HStack justifyContent={'space-between'} alignItems='center'>
-                                        <DefText text='입찰금액' style={[styles.certiLabel]} />
-                                        <VStack  alignItems='flex-end'>
-                                            <DefText text={numberFormat(244600) + '원'} style={[styles.certiSmall, {color:'#0195FF'}]} />
-                                            <DefText text='(세금포함)' style={[styles.certiSmall, {marginTop:3}]} />
-                                        </VStack>
-                                    </HStack>
-                                </Box>
-                                <Box pt='20px'>
-                                    <HStack justifyContent={'space-between'}>
-                                        <DefButton 
-                                            text="업체정보" 
-                                            btnStyle={[styles.reserButton, {backgroundColor:'#DFDFDF'}]}
-                                            textStyle={[styles.reserButtonText]}
-                                            onPress={()=>navigation.navigate("ReservationExpert", {"idx":1})}
-                                        />
-                                        <DefButton 
-                                            text="예약하기" 
-                                            btnStyle={[styles.reserButton, {backgroundColor:'#0195FF'}]}
-                                            textStyle={[styles.reserButtonText, {color:'#fff'}]}
-                                        />
-                                    </HStack>
-                                </Box>
-                            </Box>
-                        </Box>
-                    </>
-                }
-                {
-                    tabCategory == '완료' && 
-                    <Box px='25px'>
-                        <Box>
-                            <HStack justifyContent={'space-between'} mt='30px'>
-                                <Box>
-                                    <HStack alignItems={'flex-end'}>
-                                        <DefText text="홍길동" style={[fsize.fs15, fweight.b, {marginRight:5}]} />
-                                        <DefText text="이사전문가" style={[fsize.fs13, fweight.b, {color:'#979797'}]} />
-                                    </HStack>
-                                    <DefText text="내집처럼 이사해드리겠습니다." style={[fsize.fs12, {marginVertical:10}]} />
-                                    <DefText text="이사서비스" style={[fsize.fs13, {color:'#6C6C6C'}]} />
-                                    <HStack mt='10px'>
-                                        <Image
-                                            source={require('../images/starIcon.png')}
-                                            alt='별점'
-                                            style={[
-                                                {
-                                                    width: (width - 50) * 0.04,
-                                                    height: (width - 50) * 0.038,
-                                                    resizeMode:'contain'
-                                                }
-                                            ]}
-                                        />
-                                        <DefText text='4.0' style={[fsize.fs12, fweight.b, {color:'#6C6C6C', marginLeft:5}]} />
-                                    </HStack>
-                                </Box>
-                                <Box>
-                                    <Image 
-                                        source={require('../images/expertEx2.png')}
-                                        alt='홍길동'
-                                        style={[
-                                            {
-                                                width: (width - 50) * 0.26,
-                                                height: (width - 50) * 0.26,
-                                                borderRadius: 10,
-                                                resizeMode:'contain'
-                                            }
-                                        ]}
-                                    />
-                                </Box>
-                            </HStack>
-                            <HStack mt='20px' pb='20px'>
-                                <HStack alignItems={'center'} mr='10px'> 
-                                    <Image 
-                                        source={require("../images/certiCheckIcon.png")}
-                                        style={{
-                                            width:16,
-                                            height:16,
-                                            resizeMode:'contain'
-                                        }}
-                                    />
-                                    <DefText text="본인인증완료" style={[styles.checkIcons, {color:'#65D97C'}]} />
-                                </HStack>
-                                <HStack alignItems={'center'}>
-                                    <Image 
-                                        source={require("../images/companyCheckIcon.png")}
-                                        style={{
-                                            width:16,
-                                            height:16,
-                                            resizeMode:'contain'
-                                        }}
-                                    />
-                                    <DefText text="사업자인증완료" style={[styles.checkIcons, {color:'#0E57FF'}]} />
-                                </HStack>
-                            </HStack>
-                            <Box py='20px' borderTopWidth={2} borderBottomWidth={2} borderTopColor='#F3F4F5' borderBottomColor={'#F3F4F5'}>
-                                <HStack justifyContent={'space-between'} alignItems='center'>
-                                    <DefText text='반포장이사 / 일반이사 전문' style={[styles.certiLabel]} />
-                                    <HStack alignItems={'center'}>
-                                        <DefText text='이사 건수 ' style={[styles.certiSmall]} />
-                                        <DefText text='38' style={[styles.certiLabel, {borderBottomWidth:1}]}/>
-                                        <DefText text=' 건' style={[styles.certiSmall]} />
-                                    </HStack>
-                                </HStack>
-                                <HStack justifyContent={'space-between'} alignItems='center' mt='15px' >
-                                    <DefText text='경력 7년' style={[styles.certiLabel]} />
-                                    <HStack alignItems={'center'}>
-                                        <DefText text='후기 ' style={[styles.certiSmall]} />
-                                        <DefText text='38' style={[styles.certiLabel, {borderBottomWidth:1}]}/>
-                                        <DefText text=' 개' style={[styles.certiSmall]} />
-                                    </HStack>
-                                </HStack>
-                            </Box>
+                    moveCate == "가정집 이사" &&
+                    <HStack px='25px' justifyContent={'space-between'} pt='15px'>
+                        <TouchableOpacity onPress={()=>setTwoCate("사진")} style={[styles.twoTabButton, twoCate == "사진" && colorSelect.sky]}>
+                            <DefText text="사진으로 이사" style={[styles.twoTabButtonText, twoCate == "사진" && [{color:'#fff'}, fweight.b]]} />
+                            
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={()=>setTwoCate("방문")} style={[styles.twoTabButton, twoCate == "방문" && colorSelect.sky]}>
+                            <DefText text="방문견적요청" style={[styles.twoTabButtonText, twoCate == "방문" && [{color:'#fff'}, fweight.b]]}  />
                            
-                            <Box py='20px' borderBottomWidth={2}  borderBottomColor={'#F3F4F5'}>
-                                <HStack justifyContent={'space-between'} alignItems='center'>
-                                    <DefText text='입찰금액' style={[styles.certiLabel]} />
-                                    <VStack  alignItems='flex-end'>
-                                        <DefText text={numberFormat(244600) + '원'} style={[styles.certiSmall, {color:'#0195FF'}]} />
-                                        <DefText text='(세금포함)' style={[styles.certiSmall, {marginTop:3}]} />
-                                    </VStack>
-                                </HStack>
-                            </Box>
-                            <Box pt='20px'>
-                                <HStack justifyContent={'space-between'}>
-                                    <DefButton 
-                                        text="업체정보" 
-                                        btnStyle={[styles.reserButton, {backgroundColor:'#DFDFDF'}]}
-                                        textStyle={[styles.reserButtonText]}
-                                        onPress={()=>navigation.navigate("ReservationExpert", {"idx":1})}
-                                    />
-                                    <DefButton 
-                                        text="후기작성" 
-                                        btnStyle={[styles.reserButton, {backgroundColor:'#0195FF'}]}
-                                        textStyle={[styles.reserButtonText, {color:'#fff'}]}
-                                        onPress={()=>navigation.navigate("ReviewScreen1")}
-                                    />
-                                </HStack>
-                                <DefText text={"서비스에 대한 후기를 남겨주세요\n14일이 지나면 후기를 남길 수 없어요!"} style={[styles.expertImportant]} />
-                            </Box>
-                        </Box>
-                    </Box>
+                        </TouchableOpacity>
+                    </HStack>
                 }
-                    
-            </ScrollView>
+                
+                {
+                    (moveCate == "소형 이사" && tabCategory == "찾는중") &&
+                    <AIauction navigation={navigation} />
+                }
+                {
+                    (moveCate == "소형 이사" && tabCategory == "완료") &&
+                    <AIauctionEnd navigation={navigation} />
+                }
+                {
+                    (moveCate == "가정집 이사" && tabCategory == "찾는중" &&  twoCate == "사진") &&
+                    <TwoauctionImage navigation={navigation} />
+                }
+                {
+                    (moveCate == "가정집 이사" && tabCategory == "완료" &&  twoCate == "사진") &&
+                    <TwoauctionImageEnd navigation={navigation} />
+                }
+                {
+                    (moveCate == "가정집 이사" && tabCategory == "찾는중" && twoCate == "방문") &&
+                    <Twoauction navigation={navigation} />
+                }
+                {
+                    (moveCate == "가정집 이사" && tabCategory == "완료" && twoCate == "방문") &&
+                    <TwoauctionEnd navigation={navigation} />
+                }
+                {
+                    (moveCate == "차량제공" && tabCategory == "찾는중") &&
+                    <Carauction navigation={navigation} />
+                }
+                 {
+                    (moveCate == "차량제공" && tabCategory == "완료") &&
+                    <CarAuctionEnd navigation={navigation} />
+                }
+                </ScrollView>
+            }
         </Box>
     );
 };
@@ -370,6 +251,28 @@ const styles = StyleSheet.create({
         color:'#FF5050',
         marginTop:20
     },
+    twoTabButton: {
+        width: (width-50) * 0.48,
+        height:45,
+        ...colorSelect.gray,
+        borderRadius:10,
+        alignItems:'center',
+        justifyContent:'center'
+    },
+    twoTabButtonText: {
+        color:'#000',
+        ...fweight.r,
+        ...fsize.fs14
+    }
 })
 
-export default Reservation;
+export default connect(
+    ({ User }) => ({
+        userInfo: User.userInfo, //회원정보
+    }),
+    (dispatch) => ({
+        member_login: (user) => dispatch(UserAction.member_login(user)), //로그인
+        member_info: (user) => dispatch(UserAction.member_info(user)), //회원 정보 조회
+        member_chatCnt: (user) => dispatch(UserAction.member_chatCnt(user))
+    })
+)(Reservation);
