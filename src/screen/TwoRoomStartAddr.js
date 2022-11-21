@@ -1,23 +1,25 @@
-import React, { useEffect, useState } from 'react';
-import {Box, HStack, VStack, Modal} from 'native-base';
-import { BottomButton, DefButton, DefInput, DefText } from '../common/BOOTSTRAP';
-import {connect} from 'react-redux';
-import { actionCreators as UserAction } from '../redux/module/action/UserAction';
-import SubHeader from '../components/SubHeader';
+import React, {useEffect, useRef, useState} from 'react';
 import { TouchableOpacity, StyleSheet, Dimensions, Image, ScrollView, Platform, SafeAreaView, PermissionsAndroid, ActivityIndicator } from 'react-native';
+import { Box, VStack, HStack, Modal } from 'native-base';
+import { DefText, DefButton, DefInput, BottomButton } from '../common/BOOTSTRAP';
+import Font from '../common/Font';
+import { numberFormat, textLengthOverCut } from '../common/DataFunction';
 import { colorSelect, fsize, fweight } from '../common/StyleCommon';
-import Api from '../Api';
+import SubHeader from '../components/SubHeader';
 import ToastMessage from '../components/ToastMessage';
-import { BASE_URL } from '../Utils/APIConstant';
 import Geolocation from 'react-native-geolocation-service';
 import {WebView} from 'react-native-webview';
+import { BASE_URL } from '../Utils/APIConstant';
 import Postcode from '@actbase/react-daum-postcode';
 
 const {width, height} = Dimensions.get("window");
 
-const ExpertAddr = (props) => {
+const TwoRoomStartAddr = (props) => {
+    const {navigation, route} = props;
+    const {params} = route;
 
-    const {navigation, userInfo, member_info, member_update} = props;
+
+    console.log('출발지', params);
 
     const [mapLoading, setMapLoading] = useState(true);
     const [startAddress, setStartAddress] = useState("");
@@ -41,9 +43,11 @@ const ExpertAddr = (props) => {
         setLongitude("");
     }
 
-    const startAddressChange = (text) => {
-        setStartAddress(text);
+
+    const startAddressChange = (addr) => {
+        setStartAddress(addr);
     }
+
 
     const geoPermission = async () => {
         await setMapLoading(true);
@@ -75,7 +79,7 @@ const ExpertAddr = (props) => {
     const getGeoLocation = async () => {
         Geolocation.getCurrentPosition( (position) => 
             {
-                console.log('geolocation:::', position.coords);
+                //console.log('geolocation:::', position.coords);
                 setLatitude(position.coords.latitude);
                 setLongitude(position.coords.longitude);
             },
@@ -91,6 +95,7 @@ const ExpertAddr = (props) => {
         )
     }
 
+    //대전광역시
     const addrSubmit = async () => {
         if(!startAddress){
             ToastMessage("주소를 입력하세요.");
@@ -113,6 +118,7 @@ const ExpertAddr = (props) => {
         mapLoadingHandler();
     }, []);
 
+
     useEffect(()=>{
         if(inputAddr != ""){
             setRightDisalbe(false);
@@ -121,64 +127,37 @@ const ExpertAddr = (props) => {
         }
     }, [inputAddr]);
 
-    //console.log('주소설정', userInfo);
+    const nextNavigation = () => {
 
-    const expertUpdate = async () => {
-        const formData = new FormData();
-        formData.append("method", 'expert_update');
-        formData.append("ex_move_status", userInfo.ex_move_status);
-        formData.append("phone", userInfo.ex_phone);
-        formData.append("id", userInfo.ex_id);
-        formData.append("ex_service_status", userInfo.ex_service_status);
-        formData.append("ex_start_date", userInfo.ex_start_date);
-        formData.append("ex_service_name", userInfo.ex_service_name);
-        formData.append("ex_advantages", userInfo.ex_advantages);
-        formData.append("ex_select_reason", userInfo.ex_select_reason);
-        formData.append("ex_worth", userInfo.ex_worth);
-        formData.append("ex_refund", userInfo.ex_refund);
-        formData.append("register_status", "Y");
-
-        //추가
-        formData.append("ex_addr", inputAddr);
-
-
-        const update = await member_update(formData);
-
-        if(update.result){
-            
-            expertInfo();
-
-            navigation.navigate("ExpertArea");
-           console.log(update);
-        }
+        console.log("다음");
+        navigation.navigate("TwoRoomStartTool", {
+            "houseSize":params.houseSize,
+            "houseSizem2":params.houseSizem2,
+            "houseStructure":params.houseStructure,
+            "houseType":params.houseType,
+            "bigSelectBox":params.bigSelectBox,
+            "moveCategory":params.moveCategory,
+            "pakageType":params.pakageType,
+            "personStatus":params.personStatus,
+            "keepStatus":params.keepStatus, 
+            'moveDateKeep':params.moveDateKeep, 
+            'moveInKeep':params.moveInKeep,
+            'startAddress':inputAddr,
+            'startAddrLat':latitude,
+            'startAddrLon':longitude
+        })
+        //navigation.navigate("SmallMoveDestinationTool", {"bidx":params.bidx, "moveCategory":params.moveCategory, "pakageType":params.pakageType, "personStatus":params.personStatus, "keepStatus":params.keepStatus, "startMoveTool":params.startMoveTool, "startFloor":params.startFloor, "startAddress":inputAddr, 'moveDateKeep':params.moveDateKeep, 'moveInKeep':params.moveInKeep});
     }
-
-    const expertInfo = async () => {
-        const formData = new FormData();
-        formData.append('method', 'expert_info');
-        formData.append('id', userInfo.ex_id);
-        const member_info_list = await member_info(formData);
-
-        console.log('member_info_list:::::',member_info_list);
-    }
-
-
-    useEffect(()=> {
-        if(userInfo != null){
-            console.log("주소::", userInfo.ex_addr);
-            setInputAddr(userInfo.ex_addr);
-            setStartAddress(userInfo.ex_addr);
-        }
-    }, [])
+    //console.log(params);
 
     return (
         <Box flex={1} backgroundColor='#fff'>
-            <SubHeader headerTitle="주소 설정" navigation={navigation} />
+            <SubHeader navigation={navigation} headerTitle='가정집이사 견적요청' />
             <ScrollView>
-                <Box px='25px' pt='20px'>
-                    <DefText text="사무실 위치는 어디인가요?" style={[styles.pageTitle]} />
-                    <Box mt='10px'>
-                        {/* <DefInput 
+                <Box px='25px' pt='20px' pb='0'>
+                    <DefText text="이사 출발 위치는 어디인가요?" style={[styles.pageTitle]} />
+                    {/* <Box mt='15px'>
+                        <DefInput 
                             placeholder={'주소를 입력해 주세요.'}
                             value={startAddress}
                             onChangeText={startAddressChange}
@@ -202,31 +181,70 @@ const ExpertAddr = (props) => {
                                     }}
                                 />
                             </TouchableOpacity>
-                        </Box> */}
-                        <Box>
-                            <Box style={[styles.addrBox]}>
-                                {
-                                    address != "" ?
-                                    <DefText text={address} style={[fsize.fs13, {color:'#000'}]} />
-                                    :
-                                    <DefText text='주소를 입력하세요.' style={[fsize.fs13, {color:'#BEBEBE'}]} />
-                                }
-                            </Box>
-                            <Box position={'absolute'} top='0' right='0'> 
-                                <TouchableOpacity onPress={()=>setAddrModal(true)} style={[styles.addrSchButton]}>
-                                    <DefText text="주소찾기" style={[styles.addrSchButtonText]} />
-                                </TouchableOpacity>
-                            </Box>
                         </Box>
-                        <HStack justifyContent={'flex-end'}>
-                            <TouchableOpacity onPress={geoPermission} style={[styles.nowSpotButton]}>
-                                <DefText text="현재 위치로 지정" style={[styles.nowSpotButtonText]} />
+                    </Box> */}
+                    <Box>
+                        <Box style={[styles.addrBox]}>
+                            {
+                                address != "" ?
+                                <DefText text={address} style={[fsize.fs13, {color:'#000'}]} />
+                                :
+                                <DefText text='주소를 입력하세요.' style={[fsize.fs13, {color:'#BEBEBE'}]} />
+                            }
+                        </Box>
+                        <Box position={'absolute'} top='0' right='0'> 
+                            <TouchableOpacity onPress={()=>setAddrModal(true)} style={[styles.addrSchButton]}>
+                                <DefText text="주소찾기" style={[styles.addrSchButtonText]} />
                             </TouchableOpacity>
-                        </HStack>
+                        </Box>
                     </Box>
-                   
+                    <HStack justifyContent={'flex-end'}>
+                        <TouchableOpacity onPress={geoPermission} style={[styles.nowSpotButton]}>
+                            <DefText text="현재 위치로 지정" style={[styles.nowSpotButtonText]} />
+                        </TouchableOpacity>
+                    </HStack>
+                    {/* {
+                        longitude != "" && latitude != "" &&
+                        <DefText text={"위도 : " + latitude + ", 경도 : " + longitude} />
+                    } */}
+                </Box>
+                {/* <Box width={width} height='225px'>
+                    {
+                        mapLoading ?
+                        <Box justifyContent={'center'} alignItems='center' height={'225px'}>
+                            <ActivityIndicator size='large' color='#333' />
+                        </Box>
+                        :
+                        <WebView
+                            originWhitelist={['*']}
+                            source={{uri:mapUrl + "?addr=" + inputAddr + "&lat=" + latitude + "&lon=" + longitude}}
+                            onMessage={(e)=>{
+                                console.log('e', e.nativeEvent.data);
+                                setStartAddress(e.nativeEvent.data);
+                                setInputAddr(e.nativeEvent.data);
+                            }}
+                            style={{
+                                opacity:0.99,
+                                minHeight:1,
+                            }}
+                        />
+                    }
                    
                 </Box>
+                {
+                    inputAddr != "" &&
+                    <Box px='25px' py='20px'>
+                        <DefText text={"※ 주소 핀 이 제대로인지 확인해 주세요."} style={[styles.addrText1]} />
+                        <HStack mt='20px'>
+                            <Image source={require('../images/addrIcons.png')} alt='아이콘' style={{width:15, height:15, resizeMode:'contain', marginTop:2}} />
+                            <VStack ml='10px'>
+                                <DefText text='고객님 안심하세요' style={[styles.addrText2, {marginBottom:10}]} />
+                                <DefText text={"이사전문가와 예약이 확정이 되어야 자세한\n주소가 노출됩니다."} style={[styles.addrText2]} />
+                            </VStack>
+                        </HStack>
+                    </Box>
+                } */}
+
                 {
                     (inputAddr != "" || latitude != "") &&
                     <Box width={width} height='225px'>
@@ -253,7 +271,7 @@ const ExpertAddr = (props) => {
                     </Box>
                 }
                 
-                {/* {
+                {
                     inputAddr != "" &&
                     <Box px='25px' py='20px'>
                         <DefText text={"※ 주소 핀 이 제대로인지 확인해 주세요."} style={[styles.addrText1]} />
@@ -265,8 +283,7 @@ const ExpertAddr = (props) => {
                             </VStack>
                         </HStack>
                     </Box>
-                } */}
-                
+                }
             </ScrollView>
             <BottomButton 
                 leftText='이전' 
@@ -274,12 +291,12 @@ const ExpertAddr = (props) => {
                 leftonPress={()=>navigation.goBack()} 
                 rightDisable={ rightDisalbe } 
                 rightBtnStyle={ !rightDisalbe ? colorSelect.sky : colorSelect.gray }  
-                rightonPress={expertUpdate}
+                rightonPress={nextNavigation}
             />
             <Modal isOpen={addrModal} onClose={()=>setAddrModal(false)}>
                 <SafeAreaView style={{flex:1, width:width}}>
                     <HStack justifyContent='space-between' height='50px' alignItems='center' style={{borderBottomWidth:1, borderBottomColor:'#e3e3e3', backgroundColor:'#fff'}} px='20px'>
-                        <DefText text='주소를 입력해주세요.' style={[fsize.fs15, fweight.b]} />
+                        <DefText text='출발지 주소를 입력해주세요.' style={[fsize.fs15, fweight.b]} />
                         <TouchableOpacity style={{paddingLeft:20}} onPress={()=>{setAddrModal(false)}}>
                             <Image source={require('../images/menuClose.png')} alt='닫기' style={{width: width / 19.5, height:  width / 19.5}} resizeMode='contain' />
                         </TouchableOpacity>
@@ -356,13 +373,4 @@ const styles = StyleSheet.create({
     },
 })
 
-export default connect(
-    ({ User }) => ({
-        userInfo: User.userInfo, //회원정보
-    }),
-    (dispatch) => ({
-        member_login: (user) => dispatch(UserAction.member_login(user)), //로그인
-        member_info: (user) => dispatch(UserAction.member_info(user)), //회원 정보 조회
-        member_update: (user) => dispatch(UserAction.member_update(user)), //회원정보 변경
-    })
-)(ExpertAddr);
+export default TwoRoomStartAddr;
