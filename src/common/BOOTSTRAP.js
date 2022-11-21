@@ -23,7 +23,7 @@ export const DefButton = ({text, onPress, btnStyle, textStyle, disabled, activeO
 }
 
 //기본 인풋
-export const DefInput = ({placeholder, placeholderTextColor, value, onChangeText, inputHeight, inputStyle, multiline, textAlignVertical, onSubmitEditing, secureTextEntry, keyboardType, maxLengthInput}) => {
+export const DefInput = ({placeholder, placeholderTextColor, value, onChangeText, inputHeight, inputStyle, multiline, textAlignVertical, onSubmitEditing, secureTextEntry, keyboardType, maxLengthInput, disabled}) => {
     return(
         <TextInput
             placeholder={placeholder}
@@ -39,6 +39,7 @@ export const DefInput = ({placeholder, placeholderTextColor, value, onChangeText
             secureTextEntry={ secureTextEntry }
             keyboardType={ !keyboardType ? 'default' : keyboardType}
             maxLength={ maxLengthInput }
+            editable={disabled}
         />
     )
 }
