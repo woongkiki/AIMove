@@ -1,34 +1,65 @@
 {
   "project_info": {
-    "project_number": "1010442184943",
-    "project_id": "ai-move-64091",
-    "storage_bucket": "ai-move-64091.appspot.com"
+    "project_number": "158098987800",
+    "project_id": "homemove-e02b4",
+    "storage_bucket": "homemove-e02b4.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1010442184943:android:7a1f294f388051b883931a",
+        "mobilesdk_app_id": "1:158098987800:android:ce06c97d5be23676a7dc6d",
         "android_client_info": {
           "package_name": "com.cnjmonster.aimove"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1010442184943-4qcbsdj1tguc471qr8semci8r6t4opr1.apps.googleusercontent.com",
+          "client_id": "158098987800-98eo30ud4j2pbbctr1qji7b45mp08qq9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cnjmonster.aimove",
+            "certificate_hash": "5dce1f894c3d9f03f73cf2bfe0c869e3b01e7adf"
+          }
+        },
+        {
+          "client_id": "158098987800-c35v98sipo2t8hnqbgihk2h0cn4t1ipe.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cnjmonster.aimove",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "158098987800-noie4skapv9n6gmuvn9msqu56ir00053.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cnjmonster.aimove",
+            "certificate_hash": "ac013ac77ec3cb51c778ec0f33e9df11a6b90dc2"
+          }
+        },
+        {
+          "client_id": "158098987800-fu4kffnmmu6uhliv9rbd24jkid6ojgbn.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAIRVZa2gHBDnvvNJuxu37qPN0Cs_qZFyo"
+          "current_key": "AIzaSyBVJvrLzScHdawZtBxe_XsCzwLTqaPPdQU"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "1010442184943-4qcbsdj1tguc471qr8semci8r6t4opr1.apps.googleusercontent.com",
+              "client_id": "158098987800-fu4kffnmmu6uhliv9rbd24jkid6ojgbn.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "158098987800-08r24hpbu0sokuv8621nfbe9u691t6md.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.cnjmonster.aimove"
+              }
             }
           ]
         }
