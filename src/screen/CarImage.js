@@ -1,24 +1,21 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
-import { TouchableOpacity, StyleSheet, Dimensions, Image, ScrollView, Platform, SafeAreaView, Animated, ActivityIndicator } from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
+import { TouchableOpacity, StyleSheet, Dimensions, Image, ScrollView, Platform, SafeAreaView, Animated } from 'react-native';
 import { Box, VStack, HStack, Modal } from 'native-base';
-import { DefText, DefButton, DefInput } from '../common/BOOTSTRAP';
+import { DefText, DefButton, DefInput, BottomButton } from '../common/BOOTSTRAP';
 import Font from '../common/Font';
 import { numberFormat, textLengthOverCut } from '../common/DataFunction';
 import { colorSelect, fsize, fweight } from '../common/StyleCommon';
+import SubHeader from '../components/SubHeader';
+import ToastMessage from '../components/ToastMessage';
 import Api from '../Api';
 import ImagePicker from 'react-native-image-crop-picker';
-import ToastMessage from '../components/ToastMessage';
-import {connect} from 'react-redux';
-import { actionCreators as UserAction } from '../redux/module/action/UserAction';
 import RenderHtml from 'react-native-render-html';
 import StyleHtml from '../common/StyleHtml';
-import YoutubePlayer from "react-native-youtube-iframe";
-import HeaderHome from '../components/HeaderHome';
 import { Vimeo } from 'react-native-vimeo-iframe';
 
-const {width, height} = Dimensions.get("window");
-const systemFonts = [...Font.SCoreDreamR, 'S-CoreDream-4Regular'];
+const {width} = Dimensions.get("window");
 
+const systemFonts = [...Font.SCoreDreamR, 'S-CoreDream-4Regular'];
 const WebRender = React.memo(function WebRender({html}) {
     return(
         <RenderHtml
@@ -33,29 +30,19 @@ const WebRender = React.memo(function WebRender({html}) {
     )
 })
 
-const CameraSmallHome = (props) => {
+const CarImage = (props) => {
+    const {navigation, route} = props;
+    const {params} = route;
 
-    const {navigation, userInfo} = props;
+    console.log(params);
 
-    const [loading, setLoading] = useState(true);
     const [cameraModal, setCameraModal] = useState(false);
     const [tutoriaImage, setTutorialImage] = useState("");
 
-    const [tutorialCate, setTutorialCate] = useState("");
-    const [tutorialImages, setTutorialImages] = useState("");
-    const [tutorialVideo, setTutorialVideo] = useState("");
-    const [tutorialText, setTutorialText] = useState("");
-
-    const [videoPlay, setVideoPlay] = useState("pause");
-
-    const onStateChange = useCallback((state) => {
-        if(state === "ended"){
-            setVideoPlay("pause");
-        }
-    })
+    const [imageData, setImageData] = useState([]);
 
     const tutorialBannerApi = async () => {
-        await setLoading(true);
+       
         await Api.send('banner_tutorial', {}, (args)=>{
 
             let resultItem = args.resultItem;
@@ -70,40 +57,35 @@ const CameraSmallHome = (props) => {
                
             }
         });
-
-        await Api.send('text_app', {}, (args)=>{
-
-            let resultItem = args.resultItem;
-            let arrItems = args.arrItems;
-    
-            if(resultItem.result === 'Y' && arrItems) {
-               console.log('소형이사 사진 방법: ', resultItem, arrItems);
-               setTutorialCate(arrItems.aiTutorialCate);
-               setTutorialImages(arrItems.aiCameraInfoTutorial);
-               setTutorialVideo(arrItems.aiCameraInfoTutorialVideo);
-               setTutorialText(arrItems.aicameraInfoText);
-               //setTutorialImage(arrItems);
-               //setBannerList(arrItems);
-            }else{
-               console.log('소형이사 사진 방법', resultItem);
-               
-            }
-        });
-
-        await setLoading(false);
+        
     }
 
-    const [aiImage, setAiImage] = useState([]);
     const imgSelected = () => {
         ImagePicker.openPicker({
+            //width: 400,
+            //height: 400,
             compressImageMaxWidth: width * 1.5,
             compressImageMaxHeight: 450,
             compressImageQuality: 0.7,
-            cropping: true,
+            //cropping: true,
             multiple:true
           }).then(image => {
             console.log('이미지 선택....',image);
-            setAiImage(image);
+
+            setImageData(image);
+            navigation.navigate("CarImageConfirm", {
+                "startAddress":params.startAddress,
+                "startLat":params.startLat, 
+                "startLon":params.startLon,
+                "destinationAddress":params.destinationAddress,
+                "destinationLat":params.destinationLat, 
+                "destinationLon":params.destinationLon,
+                "moveDate":params.moveDate,
+                "moveDatetime":params.moveDatetime,
+                "carImage":image
+            })
+            setCameraModal(false);
+
           }).catch(e => {
             setCameraModal(false);
             ToastMessage("갤러리 선택을 취소하셨습니다.");
@@ -112,18 +94,31 @@ const CameraSmallHome = (props) => {
 
     const cameraSelected = () => {
         ImagePicker.openCamera({
+            //width: 400,
+            //height: 400,
             compressImageMaxWidth: width * 1.5,
             compressImageMaxHeight: 450,
             compressImageQuality: 0.7,
             cropping: false,
           }).then(image => {
             console.log(image);
-            
+           
             let imageArr = [];
 
             imageArr.push(image);
 
-            setAiImage(imageArr);
+            setImageData(imageArr);
+            navigation.navigate("CarImageConfirm", {
+                "startAddress":params.startAddress,
+                "startLat":params.startLat, 
+                "startLon":params.startLon,
+                "destinationAddress":params.destinationAddress,
+                "destinationLat":params.destinationLat, 
+                "destinationLon":params.destinationLon,
+                "moveDate":params.moveDate,
+                "moveDatetime":params.moveDatetime,
+                "carImage":imageArr
+            })
             setCameraModal(false);
 
           }).catch(e => {
@@ -139,57 +134,27 @@ const CameraSmallHome = (props) => {
           
     }
 
+    const [appText, setAppText] = useState("");
+    const pageTextApi = () => {
+        Api.send('car_appText', {}, (args)=>{
 
-
-    const addImageSubmit = async() => {
-       
-        const formData = new FormData();
-        formData.append('method', 'ai_upload');
-        console.log('imageArr',aiImage);
-
-        aiImage.map((item, index) => {
-            let tmpName = item.path;
-            let fileLength = tmpName.length;
-            let fileDot = tmpName.lastIndexOf('.');
-            let fileExt = tmpName.substring(fileDot, fileLength).toLowerCase();
-            let strtotime = new Date().valueOf();
-            let fullName = strtotime + index + fileExt;
-            
-            return formData.append('files[]', {'uri' : item.path, 'name': fullName, 'size': item.size, 'type': item.mime});
-        })
-        formData.append('id', userInfo.id);
-
-        const upload = await Api.multipartRequest(formData);
-        
-        console.log("ai_upload::::", upload);
-       
+            let resultItem = args.resultItem;
+            let arrItems = args.arrItems;
+    
+            if(resultItem.result === 'Y' && arrItems) {
+               //console.log('페이지 문구 보기: ', arrItems);
+               setAppText(arrItems);
+            }else{
+               console.log('페이지 문구 출력 실패!', resultItem);
+               //setAppInfoVideoKey("");
+            }
+        });
     }
-
-    const ImageConfirmMove = () => {
-        
-
-        navigation.navigate("ImageConfirm", {"aiImage":aiImage});
-
-    }
-
-
-    useEffect(()=> {
-        if(aiImage != ""){
-            //addImageSubmit()
-            ImageConfirmMove();
-            setCameraModal(false);
-            //console.log('이미지 확인,,', aiImage);
-        }
-    }, [aiImage])
-
-    const nextNavigation = () => {
-        navigation.navigate("ImageConfirm");
-        setCameraModal(false);
-    }
-
+    
     useEffect(()=> {
         tutorialBannerApi();
-    }, [])
+        pageTextApi();
+    }, []);
 
     const videoCallbacks = {
         timeupdate: (data) => console.log('timeupdate: ', data),
@@ -198,50 +163,37 @@ const CameraSmallHome = (props) => {
         fullscreenchange: (data) => console.log('fullscreenchange: ', data),
         ended: (data) => console.log('ended: ', data),
         controlschange: (data) => console.log('controlschange: ', data),
-      };
-      
+    };
 
     return (
         <Box flex={1} backgroundColor='#fff'>
-          
-            {
-                loading ?
-                <Box flex={1} alignItems='center' justifyContent={'center'}>
-                    <ActivityIndicator size='large' color="#333" />
-                </Box>
-                :
-                <Box flex={1}>
-                    <ScrollView>
-                        {
-                            tutorialCate != "" && 
-                            tutorialCate == "이미지" ?
-                            <WebRender html={tutorialImages} />
-                            :
-                            // <YoutubePlayer
-                            //     height={400}
-                            //     play={videoPlay}
-                            //     videoId={tutorialVideo}
-                            //     onChangeState={onStateChange}
-                            // />
-                            <Vimeo
-                                videoId={tutorialVideo}
-                                params={'api=1&autoplay=0'}
-                                handlers={videoCallbacks}
-                            />
-                        }
-                    </ScrollView>
-                    <Box pt='30px' pb='20px' backgroundColor='#fff' borderTopLeftRadius={30} borderTopRightRadius={30} shadow={6}>
-                        <Box px='25px'>
-                            {
-                                tutorialText != "" &&
-                                <WebRender html={tutorialText} />
-                            }
-                            <DefButton text='AI 견적 시작하기' btnStyle={[colorSelect.sky, {marginTop:30}]} textStyle={[{color:'#fff'}, fweight.m]} onPress={()=>setCameraModal(true)} />
-                        </Box>
+            <SubHeader headerTitle="차량만 대여" navigation={navigation} />
+            <ScrollView>
+                {
+                    appText != "" &&
+                    appText.carTutorialCate == "이미지" ?
+                    <Box>
+                        <WebRender html={appText.carTutorial} />
                     </Box>
+                    :
+                    <Vimeo
+                        videoId={appText.carTutorialVideo}
+                        params={'api=1&autoplay=0'}
+                        handlers={videoCallbacks}
+                    />
+                }
+            </ScrollView>
+            <Box pt='30px' pb='20px' backgroundColor='#fff' borderTopLeftRadius={30} borderTopRightRadius={30} shadow={6}>
+                <Box px='25px'>
+                    {
+                        appText != "" && 
+                        <VStack>
+                            <WebRender html={appText.carTutorialText} />
+                        </VStack>
+                    }
+                    <DefButton text='사진촬영 시작하기' btnStyle={[colorSelect.sky, {marginTop:30}]} textStyle={[{color:'#fff'}, fweight.m]} onPress={()=>setCameraModal(true)} />
                 </Box>
-            }
-            
+            </Box>
             <Modal isOpen={cameraModal} onClose={()=>setCameraModal(false)}>
                 <Modal.Content width={width - 50}>
                     <Modal.Body py='25px' px='20px'>
@@ -295,11 +247,4 @@ const styles = StyleSheet.create({
     }
 })
 
-export default connect(
-    ({ User }) => ({
-        userInfo: User.userInfo, //회원정보
-    }),
-    (dispatch) => ({
-        member_login: (user) => dispatch(UserAction.member_login(user)), //로그인
-    })
-)(CameraSmallHome);
+export default CarImage;
