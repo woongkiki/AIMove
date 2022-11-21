@@ -80,5 +80,9 @@
      //method : member_out
      return await $http.multipart(url, data);
    },
-
+   member_chatCnt: async (data) => {
+    const url = `${BASE_URL}/adm/api/`;
+    //method : member_out
+    return await $http.multipart(url, data);
+  },
  };

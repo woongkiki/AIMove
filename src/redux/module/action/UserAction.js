@@ -11,6 +11,7 @@ export const WISH_LIST_FLEX = 'user/WISH_LIST_FLEX';
 export const MEMBER_PUSH_LIST = 'user/MEMBER_PUSH_LIST';
 export const MEMBER_KEYWORD_LIST = 'user/MEMBER_KEYWORD_LIST';
 export const MEMBER_LOGOUT = 'user/MEMBER_LOGOUT';
+export const MEMBER_CHAT_CNT = 'user/MEMBER_CHAT_CNT';
 
 export const actionCreators = {
   //회원 로그인
@@ -18,7 +19,7 @@ export const actionCreators = {
     try {
       const response = await UserApi.member_login(user);
       
-     //console.log(response);
+     console.log('response:::::', response);
 
       if (response.result) {
         await dispatch({
@@ -28,7 +29,18 @@ export const actionCreators = {
 
 
 
-        //console.log('response',response.data.id);
+        //console.log('response',response.data.phoneNumber);
+        if(response.data.m_type == "일반"){
+          AsyncStorage.setItem('id',response.data.id);
+          AsyncStorage.setItem('mtype',"일반");
+        }else if(response.data.m_type == "SNS"){
+          AsyncStorage.setItem('id',response.data.id);
+          AsyncStorage.setItem('mtype',"SNS");
+        }else{
+
+          AsyncStorage.setItem('id',response.data.ex_id);
+          AsyncStorage.setItem('mtype',"전문가");
+        }
         //console.log('저장', response.data.auto_logins);
 
         // const saves = await response.data.auto_logins;
@@ -48,9 +60,7 @@ export const actionCreators = {
         return { state: false, msg: response.msg, ids: '' };
       }
     } catch (error) {
-      console.log('error','1231231231231');
       return { state: false, msg: error, ids: '' };
-
     }
   },
   member_comment: (user) => async (dispatch) => {
@@ -278,7 +288,10 @@ export const actionCreators = {
     try {
       const response = await UserApi.member_logout(data);
       // console.log('member_logout :::', response);
-      AsyncStorage.removeItem('id');
+
+      AsyncStorage.removeItem('phone');
+      AsyncStorage.removeItem('mtype');
+      
       //AsyncStorage.removeItem('save_id');
 
       await dispatch({
@@ -295,7 +308,9 @@ export const actionCreators = {
     try {
       const response = await UserApi.member_out(data);
       // console.log('member_out :::', response);
-
+      AsyncStorage.removeItem('phone');
+      AsyncStorage.removeItem('mtype');
+      
       await dispatch({
         type: MEMBER_LOGOUT,
       });
@@ -315,6 +330,30 @@ export const actionCreators = {
     } catch (error) {
       // console.log('member_sellerReg Error : ', error);
       return { state: false, msg: '' };
+    }
+  },
+
+  //채팅
+  member_chatCnt: (user) => async (dispatch) => {
+    try {
+      const response = await UserApi.member_chatCnt(user);
+//       console.log('member_info ::: ', response);
+
+      if (response.result) {
+        await dispatch({
+          type: MEMBER_CHAT_CNT,
+          payload: response.data,
+        });
+        return { state: true, result: response.data, msg:response.msg };
+      } else {
+        await dispatch({
+          type: MEMBER_CHAT_CNT,
+          payload: null,
+        });
+        return { state: false, msg: response.msg, nick: '' };
+      }
+    } catch (error) {
+      return { state: false, msg: '', nick: '' };
     }
   },
 };
